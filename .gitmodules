@@ -1,0 +1,3 @@
+[submodule "url_benchmark"]
+	path = url_benchmark
+	url = git@github.com:AOS55/url_benchmark.git
