@@ -8,7 +8,7 @@ from dm_control import manipulation, suite
 from dm_control.suite.wrappers import action_scale, pixels
 from dm_env import StepType, specs
 
-import libraries.dmc.dmc_tasks as cdmc
+import libraries.dmc as cdmc
 from .wrappers import GymWrapper
 
 ENV_TYPES = {
@@ -310,7 +310,7 @@ def _make_jaco(obs_type, domain, task, frame_stack, action_repeat, seed):
     return env
 
 def _make_gym(obs_type, domain, task, frame_stack, action_repeat, seed):
-    env = gym.make(domain)
+    env = gym.make(domain, render_mode='single_rgb_array')
     env = GymWrapper(env)
     env = ActionDTypeWrapper(env, np.float32)
     env = ActionRepeatWrapper(env, action_repeat)
@@ -354,16 +354,15 @@ def make(name, obs_type, frame_stack, action_repeat, seed):
     
     assert domain in ENV_TYPES, f'task domain: {domain} is not recognized'
     env_type = ENV_TYPES[domain]
-
     if env_type == 'dmc_jaco':
         make_fn = _make_jaco 
-    elif domain == 'gym':
+    elif env_type == 'gym':
         make_fn = _make_gym
     else:
         make_fn = _make_dmc
     env = make_fn(obs_type, domain, task, frame_stack, action_repeat, seed)
 
-    if domain == 'gym':
+    if env_type == 'gym':
         # env = ObservationDTypeWrapper(env, np.float32)
         env = action_scale.Wrapper(env, minimum=-1.0, maximum=+1.0)
         env = ExtendedTimeStepWrapper(env)
