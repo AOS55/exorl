@@ -15,11 +15,11 @@ import numpy as np
 import torch
 from dm_env import specs
 
-import dmc
-import utils
-from logger import Logger
-from replay_buffer import ReplayBufferStorage, make_replay_loader
-from video import TrainVideoRecorder, VideoRecorder
+from utils.env_constructor import make
+import utils.utils as utils
+from utils.logger import Logger
+from utils.replay_buffer import ReplayBufferStorage, make_replay_loader
+from utils.video import TrainVideoRecorder, VideoRecorder
 
 torch.backends.cudnn.benchmark=True
 
@@ -45,11 +45,11 @@ class Workspace:
                              use_wandb=cfg.use_wandb)
 
         # create env
-        self.train_env = dmc.make(cfg.task, cfg.obs_type, cfg.frame_stack,
+        self.train_env = make(cfg.task, cfg.obs_type, cfg.frame_stack,
                                   cfg.action_repeat, cfg.seed)
         # self.eval_env = dmc.make(cfg.task, cfg.obs_type, cfg.frame_stack,
         #                          cfg.action_repeat, cfg.seed)
-        self.sample_env = dmc.make(cfg.task, cfg.obs_type, cfg.frame_stack,
+        self.sample_env = make(cfg.task, cfg.obs_type, cfg.frame_stack,
                                   cfg.action_repeat, cfg.seed)
 
         # create agent
@@ -150,7 +150,7 @@ class Workspace:
                 return payload
         return None
 
-@hydra.main(config_path='.', config_name='sampling')
+@hydra.main(config_path='configs/.', config_name='sampling')
 def main(cfg):
     from sampling import Workspace as W
     # root_dir = Path.cwd()
