@@ -9,6 +9,7 @@ from dm_control.suite.wrappers import action_scale, pixels
 from dm_env import StepType, specs
 
 import libraries.dmc as cdmc
+from libraries.safe import SimplePointBot as SPB
 from .wrappers import GymWrapper
 
 ENV_TYPES = {
@@ -18,7 +19,8 @@ ENV_TYPES = {
     'MountainCarContinuous-v0': 'gym',
     'BipedalWalker-v3': 'gym',
     'CarRacing-v2': 'gym',
-    'LunarLander-v2': 'gym'
+    'LunarLander-v2': 'gym',
+    'SimplePointBot': 'safe'
 }
 
 class ExtendedTimeStep(NamedTuple):
@@ -316,6 +318,16 @@ def _make_gym(obs_type, domain, task, frame_stack, action_repeat, seed):
     env = ActionRepeatWrapper(env, action_repeat)
     return env
 
+def _make_custom(obs_type, domain, task, frame_stack, action_repeat, seed):
+    if obs_type == 'states':
+        from_pixels = False
+    else:
+        from_pixels = True
+    env = SPB(from_pixels=from_pixels)
+    env = GymWrapper(env)
+    env = ActionDTypeWrapper(env, np.float32)
+    env = ActionRepeatWrapper(env, action_repeat)
+    return env
 
 def _make_dmc(obs_type, domain, task, frame_stack, action_repeat, seed):
     visualize_reward = False
@@ -358,11 +370,13 @@ def make(name, obs_type, frame_stack, action_repeat, seed):
         make_fn = _make_jaco 
     elif env_type == 'gym':
         make_fn = _make_gym
+    elif env_type == 'safe':
+        make_fn = _make_custom
     else:
         make_fn = _make_dmc
     env = make_fn(obs_type, domain, task, frame_stack, action_repeat, seed)
 
-    if env_type == 'gym':
+    if env_type == 'gym' or 'safe':
         # env = ObservationDTypeWrapper(env, np.float32)
         env = action_scale.Wrapper(env, minimum=-1.0, maximum=+1.0)
         env = ExtendedTimeStepWrapper(env)
