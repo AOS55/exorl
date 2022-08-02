@@ -16,7 +16,7 @@ import torch
 import wandb
 from dm_env import specs
 
-from utils.env_constructor import make
+from utils.env_constructor import make, ENV_TYPES
 import utils.utils as utils
 from utils.logger import Logger
 from utils.replay_buffer import ReplayBufferStorage, make_replay_loader
@@ -55,19 +55,24 @@ class Workspace:
         self.logger = Logger(self.work_dir,
                              use_tb=cfg.use_tb,
                              use_wandb=cfg.use_wandb)
+        self.env_type = ENV_TYPES[self.cfg.domain]
+        
         # create envs
-        task = PRIMAL_TASKS[self.cfg.domain]
-        # task = self.cfg.domain
+        if self.env_type == 'gym':
+            task = self.cfg.domain
+        else:
+            task = PRIMAL_TASKS[self.cfg.domain]
+
         self.train_env = make(task, cfg.obs_type, cfg.frame_stack,
                                   cfg.action_repeat, cfg.seed)
         self.eval_env = make(task, cfg.obs_type, cfg.frame_stack,
                                  cfg.action_repeat, cfg.seed)
         
-        print(f"obs_type: {cfg.obs_type}")
-        print(f"obs_spec: {self.train_env.observation_spec()}")
-        print(f"action_spec: {self.train_env.action_spec()}")
-        print(f"num_expl_steps: {cfg.num_seed_frames // cfg.action_repeat}")
-        print(f"agent: {cfg.agent}")
+        # print(f"obs_type: {cfg.obs_type}")
+        # print(f"obs_spec: {self.train_env.observation_spec()}")
+        # print(f"action_spec: {self.train_env.action_spec()}")
+        # print(f"num_expl_steps: {cfg.num_seed_frames // cfg.action_repeat}")
+        # print(f"agent: {cfg.agent}")
 
         # create agent
         self.agent = make_agent(cfg.obs_type,
@@ -239,7 +244,6 @@ class Workspace:
 
 @hydra.main(config_path='configs/.', config_name='pretrain')
 def main(cfg):
-    print(f'cfg: {cfg}')
     from pretrain import Workspace as W
     root_dir = Path.cwd()
     workspace = W(cfg)
