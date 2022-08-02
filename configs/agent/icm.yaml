@@ -1,5 +1,5 @@
 # @package agent
-_target_: agents.unsupervised_learning.icm.ICMAgent
+_target_: agents.unsupervised_learning.ICMAgent
 name: icm
 reward_free: ${reward_free}
 obs_type: ??? # to be specified later

@@ -1,5 +1,5 @@
 # @package agent
-_target_: agents.offline_learning.cql.CQLAgent
+_target_: agents.offline_learning.CQLAgent
 name: cql
 obs_shape: ??? # to be specified later
 action_shape: ??? # to be specified later

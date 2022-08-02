@@ -1,5 +1,5 @@
 # @package agent
-_target_: agents.offline_learning.bc.BCAgent
+_target_: agents.offline_learning.BCAgent
 name: bc
 obs_shape: ??? # to be specified later
 action_shape: ??? # to be specified later

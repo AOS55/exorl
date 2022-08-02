@@ -1,5 +1,5 @@
 # @package agent
-_target_: agents.unsupervised_learning.smm.SMMAgent
+_target_: agents.unsupervised_learning.SMMAgent
 name: smm
 
 # z params

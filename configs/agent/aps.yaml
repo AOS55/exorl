@@ -1,5 +1,5 @@
 # @package agent
-_target_: agents.unsupervised_learning.aps.APSAgent
+_target_: agents.unsupervised_learning.APSAgent
 name: aps
 reward_free: ${reward_free}
 obs_type: ??? # to be specified later

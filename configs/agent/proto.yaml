@@ -1,5 +1,5 @@
 # @package agent
-_target_: agents.unsupervised_learning.proto.ProtoAgent
+_target_: agents.unsupervised_learning.ProtoAgent
 name: proto
 reward_free: ${reward_free}
 obs_type: ??? # to be specified later

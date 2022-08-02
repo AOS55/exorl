@@ -1,5 +1,5 @@
 # @package agent
-_target_: agents.unsupervised_learning.icm_apt.ICMAPTAgent
+_target_: agents.unsupervised_learning.ICMAPTAgent
 name: ind_apt # identity mapping
 reward_free: ${reward_free}
 obs_type: ??? # to be specified later

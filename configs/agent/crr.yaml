@@ -1,5 +1,5 @@
 # @package agent
-_target_: agents.offline_learning.crr.CRRAgent
+_target_: agents.offline_learning.CRRAgent
 name: crr
 obs_shape: ??? # to be specified later
 action_shape: ??? # to be specified later
