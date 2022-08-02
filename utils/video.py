@@ -36,6 +36,10 @@ class VideoRecorder:
                                            camera_id=self.camera_id)
             else:
                 frame = env.render()
+                # _macro_size = 16
+                # _new_dim = (frame.shape[0] + (frame.shape[0] % _macro_size), frame.shape[1] + (frame.shape[1] % _macro_size))
+                # rescale to make frame divisible by 16
+                frame = cv2.resize(frame, dsize=(608, 400), interpolation=cv2.INTER_CUBIC)
             self.frames.append(frame)
 
     def log_to_wandb(self):
