@@ -58,7 +58,7 @@ class Workspace:
         self.env_type = ENV_TYPES[self.cfg.domain]
         
         # create envs
-        if self.env_type == 'gym':
+        if self.env_type == 'gym' or 'safe':
             task = self.cfg.domain
         else:
             task = PRIMAL_TASKS[self.cfg.domain]
