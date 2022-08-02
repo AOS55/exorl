@@ -11,6 +11,15 @@ from dm_env import StepType, specs
 import libraries.dmc.dmc_tasks as cdmc
 from .wrappers import GymWrapper
 
+ENV_TYPES = {
+    'walker': 'dmc',
+    'jaco': 'dmc_jaco',
+    'quadruped': 'dmc',
+    'MountainCarContinuous-v0': 'gym',
+    'BipedalWalker-v3': 'gym',
+    'CarRacing-v2': 'gym',
+    'LunarLander-v2': 'gym'
+}
 
 class ExtendedTimeStep(NamedTuple):
     step_type: Any
@@ -342,18 +351,19 @@ def make(name, obs_type, frame_stack, action_repeat, seed):
         domain = name
         task = 'default'
     domain = dict(cup='ball_in_cup').get(domain, domain)
+    
+    assert domain in ENV_TYPES, f'task domain: {domain} is not recognized'
+    env_type = ENV_TYPES[domain]
 
-    gym_envs = ['MountainCarContinuous-v0', 'BipedalWalker-v3', 'CarRacing-v2', 'LunarLander-v2']
-
-    if domain == 'jaco':
+    if env_type == 'dmc_jaco':
         make_fn = _make_jaco 
-    elif domain in gym_envs:
+    elif domain == 'gym':
         make_fn = _make_gym
     else:
         make_fn = _make_dmc
     env = make_fn(obs_type, domain, task, frame_stack, action_repeat, seed)
 
-    if domain in gym_envs:
+    if domain == 'gym':
         # env = ObservationDTypeWrapper(env, np.float32)
         env = action_scale.Wrapper(env, minimum=-1.0, maximum=+1.0)
         env = ExtendedTimeStepWrapper(env)
