@@ -1,0 +1,8 @@
+defaults:
+  - agent: ddpg
+  - override hydra/launcher: submitit_local
+
+
+hydra:
+  run:
+    dir: ./exp_local/exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_
