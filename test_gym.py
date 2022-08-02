@@ -1,13 +1,14 @@
 import gym
-from wrappers.gym_wrapper import GymWrapper
-from url_benchmark import dmc
+from utils import GymWrapper
+import utils.env_constructor as constructor
+
 
 def main():
-    env = dmc.make('CarRacing-v2',
-                    obs_type='states',
-                    frame_stack=3,
-                    action_repeat=1,
-                    seed=42)
+    env = constructor.make('BipedalWalker-v3',
+                           obs_type='states',
+                           frame_stack=3,
+                           action_repeat=1,
+                           seed=42)
     print(f'action_spec is: {env.action_spec()}')
     time_step = env.reset()
     last_episode = False
