@@ -37,6 +37,7 @@ class DIAYNAgent(DDPGAgent):
         self.update_encoder = update_encoder
         # increase obs shape to include skill dim
         kwargs["meta_dim"] = self.skill_dim
+        self.skill_type = kwargs["skill_type"]
 
         # create actor and critic
         super().__init__(**kwargs)
@@ -56,8 +57,14 @@ class DIAYNAgent(DDPGAgent):
         return (specs.Array((self.skill_dim,), np.float32, 'skill'),)
 
     def init_meta(self):
-        skill = np.zeros(self.skill_dim, dtype=np.float32)
-        skill[np.random.choice(self.skill_dim)] = 1.0
+        
+        if self.skill_type == 'uniform':
+            skill = np.random.uniform(0, 1, self.skill_dim)
+            skill = skill.astype(dtype=np.float32)
+        else:
+            skill = np.zeros(self.skill_dim, dtype=np.float32)
+            skill[np.random.choice(self.skill_dim)] = 1.0
+        
         meta = OrderedDict()
         meta['skill'] = skill
         return meta

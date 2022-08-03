@@ -16,7 +16,8 @@ hidden_dim: 1024
 feature_dim: 50
 stddev_schedule: 0.2
 stddev_clip: 0.3
-skill_dim: 16
+skill_dim: 2
+skill_type: uniform # p(z) distribution: (discrete, uniform)
 diayn_scale: 1.0
 update_skill_every_step: 50
 nstep: 3
