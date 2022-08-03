@@ -73,7 +73,7 @@ class SimplePointBot(Env, utils.EzPickle):
         if self._from_pixels:
             obs = self._state_to_image(self.state)
         else:
-            obs = self.state
+            obs = self.state.astype(dtype=np.float32)
         return obs, cur_reward, self.done, {
             "constraint": constr,
             "reward": cur_reward,
@@ -94,7 +94,7 @@ class SimplePointBot(Env, utils.EzPickle):
         if self._from_pixels:
             obs = self._state_to_image(self.state)
         else:
-            obs = self.state
+            obs = self.state.astype(dtype=np.float32)
         return obs
 
     def render(self, mode='human'):
