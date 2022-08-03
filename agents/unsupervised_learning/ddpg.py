@@ -138,7 +138,8 @@ class DDPGAgent:
                  init_critic,
                  use_tb,
                  use_wandb,
-                 meta_dim=0):
+                 meta_dim=0,
+                 skill_type='uniform'):
         self.reward_free = reward_free
         self.obs_type = obs_type
         self.obs_shape = obs_shape
