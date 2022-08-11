@@ -376,7 +376,7 @@ def make(name, obs_type, frame_stack, action_repeat, seed):
         make_fn = _make_dmc
     env = make_fn(obs_type, domain, task, frame_stack, action_repeat, seed)
 
-    if env_type == 'gym' or 'safe':
+    if env_type in ('gym', 'safe'):
         # env = ObservationDTypeWrapper(env, np.float32)
         env = action_scale.Wrapper(env, minimum=-1.0, maximum=+1.0)
         env = ExtendedTimeStepWrapper(env)
