@@ -9,7 +9,7 @@ We assume you have access to a GPU that can run CUDA 10.2 and CUDNN 8. Then, the
 ```sh
 conda env create -f conda_env.yml
 ```
-After the instalation ends you can activate your environment with
+After the installation ends you can activate your environment with
 ```sh
 conda activate urlb
 ```

@@ -31,8 +31,39 @@ conda env create -f conda_env.yml
 conda activate urls-env
 ```
 
+## Workflow
+
+We provide the following workflows:
+****
+### Unsupervised Reinforcement Learning
+  **Pre-training**, learn from agents intrinsic reward on a specific domain
+  ```sh
+  python pretrain.py agent=UNSUPERVISED_AGENT domain=DOMAIN
+  ```
+  **Fine-tuning**, learn with the pre-trained agent on a specific, task specific reward is now used for the agent
+  ```sh
+  python finetune.py pretrained_agent=UNSUPERVISED_AGENT task=TASK snapshot_ts=TS obs_type=OBS_TYPE
+  ```
+****
+
+### Offline Learning from Unsupervised Reinforcement Learning
+  **Pre-training**, learn from agents intrinsic reward on a specific domain
+  ```sh
+  python pretrain.py agent=UNSUPERVISED_AGENT domain=DOMAIN
+  ```
+  **Sampling**, sampledemos from agent replay buffer on a specific domain
+  ```sh
+  python sampling.py agent=UNSUPERVISED_AGENT domain=DOMAIN samples=SAMPLES snapshot_ts=TS obs_type=OBS_TYPE
+  ```
+  **Offline-learning**, learn a policy using the offline data collected on the specific task.
+  ```sh
+  python train_offline.py agent=OFFLINE_AGENT expl_agent=UNSUPERVISED_AGENT task=TASK
+  ```
+
+****
+
 ## Datasets
-We provide exploratory datasets for 6 DeepMind Control Stuite domains
+We provide exploratory datasets for 6 DeepMind Control Suite domains
 | Domain | Dataset name | Available task names |
 |---|---|---|
 | Cartpole | `cartpole` | `cartpole_balance`, `cartpole_balance_sparse`, `cartpole_swingup`, `cartpole_swingup_sparse` |
