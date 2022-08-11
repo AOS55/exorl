@@ -58,7 +58,7 @@ class Workspace:
         self.env_type = ENV_TYPES[self.cfg.domain]
         
         # create envs
-        if self.env_type == 'gym' or 'safe':
+        if self.env_type in ('gym', 'safe'):
             task = self.cfg.domain
         else:
             task = PRIMAL_TASKS[self.cfg.domain]
@@ -88,7 +88,6 @@ class Workspace:
                       self.train_env.action_spec(),
                       specs.Array((1,), np.float32, 'reward'),
                       specs.Array((1,), np.float32, 'discount'))
-        print(f'data_specs are: {data_specs}')
 
         # create data storage
         self.replay_storage = ReplayBufferStorage(data_specs, meta_specs,
@@ -173,8 +172,6 @@ class Workspace:
         episode_step, episode_reward = 0, 0
         time_step = self.train_env.reset()
         meta = self.agent.init_meta()
-        print(f'time_step: {time_step}')
-        print(f'meta: {meta}')
         self.replay_storage.add(time_step, meta)
         self.train_video_recorder.init(time_step.observation)
         metrics = None
