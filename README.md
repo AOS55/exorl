@@ -1,14 +1,15 @@
 
 
-# ExORL: Exploratory Data for Offline Reinforcement Learning
+# The Unsupervised Reinforcement Learning Suite (URLS)
 
-This is an original PyTorch implementation of the ExORL framework from
+URLS aims to provide a set of unsupervised reinforcement learning algorithms and experiments for the purpose of researching the the applicability of unsupervised to a variety of paradigms. 
 
-[Don't Change the Algorithm, Change the Data: Exploratory Data for Offline Reinforcement Learning](https://arxiv.org/abs/2201.13425) by
+The codebase is based upon [URLB](https://github.com/rll-research/url_benchmark) and [ExORL](https://github.com/denisyarats/exorl). Further details are provided in the following papers:
 
-[Denis Yarats*](https://cs.nyu.edu/~dy1042/), [David Brandfonbrener*](https://davidbrandfonbrener.github.io/), [Hao Liu](https://www.haoliu.site/), [Misha Laskin](https://www.mishalaskin.com/), [Pieter Abbeel](https://people.eecs.berkeley.edu/~pabbeel/), [Alessandro Lazaric](http://chercheurs.lille.inria.fr/~lazaric/Webpage/Home/Home.html), and [Lerrel Pinto](https://www.lerrelpinto.com).
+- [URLB: Unsupervised Reinforcement Learning Benchmark](https://arxiv.org/abs/2110.15191)
+- [Don't Change the Algorithm, Change the Data: Exploratory Data for Offline Reinforcement Learning](https://arxiv.org/abs/2201.13425)
 
-*Equal contribution.
+URLS is intended as a successor to URLB allowing for an increased number of experiments and RL paradigms.
 
 ## Prerequisites
 
@@ -27,7 +28,7 @@ sudo apt install libosmesa6-dev libgl1-mesa-glx libglfw3 unzip
 Install dependencies:
 ```sh
 conda env create -f conda_env.yml
-conda activate exorl
+conda activate urls-env
 ```
 
 ## Datasets
