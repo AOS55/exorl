@@ -4,7 +4,7 @@ S3_URL=https://dl.fbaipublicfiles.com/exorl
 DOMAIN=${1:-walker}
 ALGO=${2:-proto}
 
-DIR=./datasets/${DOMAIN}
+DIR=./data/datasets/${DOMAIN}
 mkdir -p ${DIR}/${ALGO}
 
 URL=${S3_URL}/${DOMAIN}/${ALGO}.zip

@@ -14,11 +14,11 @@ import numpy as np
 import torch
 from dm_env import specs
 
-import dmc
-import utils
-from logger import Logger
-from replay_buffer import make_replay_loader
-from video import VideoRecorder
+import utils.env_constructor as make
+import utils.utils as utils
+from utils.logger import Logger
+from utils.replay_buffer import make_replay_loader
+from utils.video import VideoRecorder
 
 torch.backends.cudnn.benchmark = True
 
@@ -58,7 +58,7 @@ def eval(global_step, agent, env, logger, num_eval_episodes, video_recorder):
         log('step', global_step)
 
 
-@hydra.main(config_path='.', config_name='config')
+@hydra.main(config_path='configs/.', config_name='offline')
 def main(cfg):
     work_dir = Path.cwd()
     print(f'workspace: {work_dir}')
@@ -70,7 +70,7 @@ def main(cfg):
     logger = Logger(work_dir, use_tb=cfg.use_tb)
 
     # create envs
-    env = dmc.make(cfg.task, seed=cfg.seed)
+    env = make(cfg.task, seed=cfg.seed)
 
     # create agent
     agent = hydra.utils.instantiate(cfg.agent,

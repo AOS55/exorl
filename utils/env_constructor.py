@@ -1,14 +1,27 @@
 from collections import OrderedDict, deque
 from typing import Any, NamedTuple
 
+import gym
 import dm_env
 import numpy as np
 from dm_control import manipulation, suite
 from dm_control.suite.wrappers import action_scale, pixels
 from dm_env import StepType, specs
 
-import custom_dmc_tasks as cdmc
+import libraries.dmc as cdmc
+from libraries.safe import SimplePointBot as SPB
+from .wrappers import GymWrapper
 
+ENV_TYPES = {
+    'walker': 'dmc',
+    'jaco': 'dmc_jaco',
+    'quadruped': 'dmc',
+    'MountainCarContinuous-v0': 'gym',
+    'BipedalWalker-v3': 'gym',
+    'CarRacing-v2': 'gym',
+    'LunarLander-v2': 'gym',
+    'SimplePointBot': 'safe'
+}
 
 class ExtendedTimeStep(NamedTuple):
     step_type: Any
@@ -16,7 +29,6 @@ class ExtendedTimeStep(NamedTuple):
     discount: Any
     observation: Any
     action: Any
-    physics: Any
 
     def first(self):
         return self.step_type == StepType.FIRST
@@ -100,7 +112,7 @@ class ActionRepeatWrapper(dm_env.Environment):
         discount = 1.0
         for i in range(self._num_repeats):
             time_step = self._env.step(action)
-            reward += time_step.reward * discount
+            reward += (time_step.reward or 0.0) * discount
             discount *= time_step.discount
             if time_step.last():
                 break
@@ -236,10 +248,6 @@ class ObservationDTypeWrapper(dm_env.Environment):
 class ExtendedTimeStepWrapper(dm_env.Environment):
     def __init__(self, env):
         self._env = env
-        physics = env.physics.state()
-        self._physics_spec = specs.Array(physics.shape,
-                                         dtype=physics.dtype,
-                                         name='physics')
 
     def reset(self):
         time_step = self._env.reset()
@@ -264,8 +272,7 @@ class ExtendedTimeStepWrapper(dm_env.Environment):
                                 action=action,
                                 reward=default_on_none(time_step.reward, 0.0),
                                 discount=default_on_none(
-                                    time_step.discount, 1.0),
-                                physics=self._env.physics.state())
+                                    time_step.discount, 1.0))
 
     def observation_spec(self):
         return self._env.observation_spec()
@@ -282,9 +289,6 @@ class ExtendedTimeStepWrapper(dm_env.Environment):
         if len(spec.shape) == 0:
             spec = spec.replace(shape=tuple((1,)), dtype=np.float32)
         return spec
-
-    def physics_spec(self):
-        return self._physics_spec
 
     def discount_spec(self):
         spec = self._env.discount_spec()
@@ -307,6 +311,23 @@ def _make_jaco(obs_type, domain, task, frame_stack, action_repeat, seed):
     env = FlattenJacoObservationWrapper(env)
     return env
 
+def _make_gym(obs_type, domain, task, frame_stack, action_repeat, seed):
+    env = gym.make(domain, render_mode='single_rgb_array')
+    env = GymWrapper(env)
+    env = ActionDTypeWrapper(env, np.float32)
+    env = ActionRepeatWrapper(env, action_repeat)
+    return env
+
+def _make_custom(obs_type, domain, task, frame_stack, action_repeat, seed):
+    if obs_type == 'states':
+        from_pixels = False
+    else:
+        from_pixels = True
+    env = SPB(from_pixels=from_pixels)
+    env = GymWrapper(env)
+    env = ActionDTypeWrapper(env, np.float32)
+    env = ActionRepeatWrapper(env, action_repeat)
+    return env
 
 def _make_dmc(obs_type, domain, task, frame_stack, action_repeat, seed):
     visualize_reward = False
@@ -322,7 +343,6 @@ def _make_dmc(obs_type, domain, task, frame_stack, action_repeat, seed):
                         task_kwargs=dict(random=seed),
                         environment_kwargs=dict(flat_observation=True),
                         visualize_reward=visualize_reward)
-
     env = ActionDTypeWrapper(env, np.float32)
     env = ActionRepeatWrapper(env, action_repeat)
     if obs_type == 'pixels':
@@ -335,23 +355,38 @@ def _make_dmc(obs_type, domain, task, frame_stack, action_repeat, seed):
     return env
 
 
-def make(name, obs_type='states', frame_stack=1, action_repeat=1, seed=1):
+def make(name, obs_type, frame_stack, action_repeat, seed):
     assert obs_type in ['states', 'pixels']
-    if name.startswith('point_mass_maze'):
-        domain = 'point_mass_maze'
-        _, _, _, task = name.split('_', 3)
-    else:
+    if '_' in name:
         domain, task = name.split('_', 1)
+    else:
+        domain = name
+        task = 'default'
     domain = dict(cup='ball_in_cup').get(domain, domain)
-
-    make_fn = _make_jaco if domain == 'jaco' else _make_dmc
+    
+    assert domain in ENV_TYPES, f'task domain: {domain} is not recognized'
+    env_type = ENV_TYPES[domain]
+    if env_type == 'dmc_jaco':
+        make_fn = _make_jaco 
+    elif env_type == 'gym':
+        make_fn = _make_gym
+    elif env_type == 'safe':
+        make_fn = _make_custom
+    else:
+        make_fn = _make_dmc
     env = make_fn(obs_type, domain, task, frame_stack, action_repeat, seed)
 
-    if obs_type == 'pixels':
-        env = FrameStackWrapper(env, frame_stack)
+    if env_type in ('gym', 'safe'):
+        # env = ObservationDTypeWrapper(env, np.float32)
+        env = action_scale.Wrapper(env, minimum=-1.0, maximum=+1.0)
+        env = ExtendedTimeStepWrapper(env)
     else:
-        env = ObservationDTypeWrapper(env, np.float32)
-
-    env = action_scale.Wrapper(env, minimum=-1.0, maximum=+1.0)
-    env = ExtendedTimeStepWrapper(env)
+        if obs_type == 'pixels':
+            env = FrameStackWrapper(env, frame_stack)
+        else:
+            env = ObservationDTypeWrapper(env, np.float32)
+        
+        env = action_scale.Wrapper(env, minimum=-1.0, maximum=+1.0)
+        env = ExtendedTimeStepWrapper(env)
+    
     return env

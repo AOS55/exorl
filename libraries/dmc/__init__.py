@@ -1,10 +1,10 @@
-from custom_dmc_tasks import cheetah
-from custom_dmc_tasks import walker
-from custom_dmc_tasks import hopper
-from custom_dmc_tasks import quadruped
-from custom_dmc_tasks import jaco
-from custom_dmc_tasks import point_mass_maze
-
+from .tasks import cheetah
+from .tasks import walker
+from .tasks import hopper
+from .tasks import quadruped
+from .tasks import jaco
+from .tasks import point_mass_maze
+from .dmc_tasks import DOMAINS, WALKER_TASKS, QUADRUPED_TASKS, JACO_TASKS, TASKS, PRIMAL_TASKS
 
 def make(domain, task,
          task_kwargs=None,
