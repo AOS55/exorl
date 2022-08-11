@@ -5,7 +5,7 @@ defaults:
 # mode
 reward_free: true
 # task settings
-domain: walker # primal task will be infered in runtime
+domain: walker # primal task will be inferred in runtime
 obs_type: states # [states, pixels]
 frame_stack: 3 # only works if obs_type=pixels
 action_repeat: 1 # set to 2 for pixels
