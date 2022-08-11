@@ -1,4 +1,4 @@
-name: exorl
+name: urls-env
 channels:
   - defaults
 dependencies:
