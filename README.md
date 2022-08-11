@@ -34,7 +34,7 @@ conda activate urls-env
 ## Workflow
 
 We provide the following workflows:
-****
+
 ### Unsupervised Reinforcement Learning
   **Pre-training**, learn from agents intrinsic reward on a specific domain
   ```sh
@@ -44,7 +44,6 @@ We provide the following workflows:
   ```sh
   python finetune.py pretrained_agent=UNSUPERVISED_AGENT task=TASK snapshot_ts=TS obs_type=OBS_TYPE
   ```
-****
 
 ### Offline Learning from Unsupervised Reinforcement Learning
   **Pre-training**, learn from agents intrinsic reward on a specific domain
