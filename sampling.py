@@ -21,7 +21,7 @@ from utils.logger import Logger
 from utils.replay_buffer import ReplayBufferStorage, make_replay_loader
 from utils.video import TrainVideoRecorder, VideoRecorder
 
-torch.backends.cudnn.benchmark=True
+torch.backends.cudnn.benchmark = True
 
 def make_agent(obs_type, obs_spec, action_spec, num_expl_steps, cfg):
     cfg.obs_type = obs_type
