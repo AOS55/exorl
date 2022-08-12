@@ -59,8 +59,9 @@ class Workspace:
                                 cfg.num_seed_frames // cfg.action_repeat,
                                 cfg.agent)
 
-        # initialize from pretrained
+        # initialize from pre-trained
         if cfg.snapshot_ts > 0:
+            print(f'snapshot is: {self.load_snapshot()}')
             pretrained_agent = self.load_snapshot()['agent']
             self.agent.init_from(pretrained_agent)
 
@@ -98,8 +99,9 @@ class Workspace:
         meta = self.agent.init_meta()
         while sample_until_step(episode):
             meta = self.agent.init_meta()
-            print(f"meta: {np.where(meta['skill']==1)[0][0]}")
+            # print(f"meta: {np.where(meta['skill']==1)[0][0]}")
             print(f"number of skills: {len(meta['skill'])}")
+            print(f"meta skill is: {meta['skill']}")
             time_step = self.sample_env.reset()
             self.video_recorder.init(self.sample_env, enabled=True)
             while not time_step.last():
@@ -114,7 +116,7 @@ class Workspace:
                 step += 1
 
             episode += 1
-            skill_index = np.where(meta['skill']==1)[0][0]
+            skill_index = str(meta['skill'])
             self.video_recorder.save(f'{episode}_{skill_index}.mp4')
 
         with self.logger.log_and_dump_ctx(self.global_frame, ty='eval') as log:
@@ -131,10 +133,14 @@ class Workspace:
         def try_load(seed):
             snapshot = snapshot_dir / str(
                 seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
+            import os
+            print(f'current dir is: {os.getcwd()}')
+            print(f'snapshot file location is: {snapshot}')
             print(f'snapshot exists: {snapshot.exists()}')
             if not snapshot.exists():
                 return None
             with snapshot.open('rb') as f:
+                print(f'f is: {f}')
                 payload = torch.load(f)
             return payload
 
