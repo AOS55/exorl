@@ -9,4 +9,4 @@ domain: quadruped
 task: quadruped_walk
 obs_type: states
 snapshot_ts: 2000000
-seed: 1
+seed: 5
