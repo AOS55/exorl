@@ -1,0 +1,12 @@
+defaults:
+  - agent: diayn
+  - override hydra/launcher: submitit_local
+
+mode: online
+unsupervised_agent: diayn
+offline_agent: bc
+domain: quadruped
+task: quadruped_walk
+obs_type: states
+snapshot_ts: 2000000
+seed: 1
