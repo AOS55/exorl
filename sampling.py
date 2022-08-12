@@ -1,6 +1,3 @@
-from calendar import c
-from curses import meta
-from random import sample
 import warnings
 
 warnings.filterwarnings('ignore', category=DeprecationWarning)
