@@ -16,7 +16,7 @@ from dm_env import specs
 
 from utils import make
 import utils.utils as utils
-from utils.logger import Logger, ReplayBufferStorage, make_replay_loader
+from utils.logger import Logger
 from utils.replay_buffer import ReplayBufferStorage, make_replay_loader
 from utils.video import TrainVideoRecorder, VideoRecorder
 

@@ -20,7 +20,7 @@ num_eval_episodes: 10
 num_sample_episodes: 2000010
 # pretrained
 snapshot_ts: 100000
-snapshot_base_dir: ../../../data/models/
+snapshot_base_dir: ./../../../data/models/
 # replay buffer
 replay_buffer_size: 1000000
 replay_buffer_num_workers: 4

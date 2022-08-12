@@ -41,6 +41,7 @@ def relable_episode(env, episode):
     episode['reward'] = np.array(rewards, dtype=reward_spec.dtype)
     return episode
 
+
 class OfflineReplayBuffer(IterableDataset):
     def __init__(self, env, replay_dir, max_size, num_workers, discount):
         self._env = env
@@ -98,6 +99,7 @@ class OfflineReplayBuffer(IterableDataset):
         while True:
             yield self._sample()
 
+
 class ReplayBufferStorage:
     def __init__(self, data_specs, meta_specs, replay_dir):
         self._data_specs = data_specs
@@ -143,8 +145,8 @@ class ReplayBufferStorage:
         eps_len = episode_len(episode)
         self._num_episodes += 1
         self._num_transitions += eps_len
-        ts = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-        eps_fn = f'{ts}_{eps_idx}_{eps_len}.npz'
+        # ts = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
+        eps_fn = f'episode_{eps_idx}_{eps_len}.npz'
         save_episode(episode, self._replay_dir / eps_fn)
 
 
@@ -235,7 +237,6 @@ class ReplayBuffer(IterableDataset):
     def __iter__(self):
         while True:
             yield self._sample()
-
 
 def _worker_init_fn(worker_id):
     seed = np.random.get_state()[1][0] + worker_id
