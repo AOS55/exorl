@@ -1,3 +1,4 @@
+from calendar import c
 from curses import meta
 from random import sample
 import warnings
@@ -47,8 +48,6 @@ class Workspace:
         # create env
         self.train_env = make(cfg.task, cfg.obs_type, cfg.frame_stack,
                                   cfg.action_repeat, cfg.seed)
-        # self.eval_env = dmc.make(cfg.task, cfg.obs_type, cfg.frame_stack,
-        #                          cfg.action_repeat, cfg.seed)
         self.sample_env = make(cfg.task, cfg.obs_type, cfg.frame_stack,
                                   cfg.action_repeat, cfg.seed)
 
@@ -64,6 +63,25 @@ class Workspace:
             print(f'snapshot is: {self.load_snapshot()}')
             pretrained_agent = self.load_snapshot()['agent']
             self.agent.init_from(pretrained_agent)
+
+        # get meta specs
+        meta_specs = self.agent.get_meta_specs()
+
+        # create replay buffer
+        data_specs = (self.train_env.observation_spec(),
+                      self.train_env.action_spec(),
+                      specs.Array((1,), np.float32, 'reward'),
+                      specs.Array((1,), np.float32, 'discount'))
+
+        self.replay_storage = ReplayBufferStorage(data_specs, meta_specs,
+                                                  self.work_dir / 'buffer')
+
+        # create replay buffer
+        self.replay_loader = make_replay_loader(self.replay_storage,
+                                                cfg.replay_buffer_size,
+                                                cfg.batch_size,
+                                                cfg.replay_buffer_num_workers,
+                                                False, cfg.nstep, cfg.discount)
 
         # create video recorders
         self.video_recorder = VideoRecorder(
@@ -97,13 +115,13 @@ class Workspace:
         sample_until_step =  utils.Until(self.cfg.num_sample_episodes)
         step, episode, total_reward = 0, 0, 0
         meta = self.agent.init_meta()
+
         while sample_until_step(episode):
             meta = self.agent.init_meta()
-            # print(f"meta: {np.where(meta['skill']==1)[0][0]}")
-            print(f"number of skills: {len(meta['skill'])}")
-            print(f"meta skill is: {meta['skill']}")
             time_step = self.sample_env.reset()
+            self.replay_storage.add(time_step, meta)
             self.video_recorder.init(self.sample_env, enabled=True)
+            trajectory = []
             while not time_step.last():
                 with torch.no_grad(), utils.eval_mode(self.agent):
                     action = self.agent.act(time_step.observation,
@@ -113,7 +131,9 @@ class Workspace:
                 time_step = self.sample_env.step(action)
                 self.video_recorder.record(self.sample_env)
                 total_reward += time_step.reward
+                trajectory.append(time_step)
                 step += 1
+                self.replay_storage.add(time_step, meta)
 
             episode += 1
             skill_index = str(meta['skill'])
@@ -159,13 +179,7 @@ class Workspace:
 @hydra.main(config_path='configs/.', config_name='sampling')
 def main(cfg):
     from sampling import Workspace as W
-    # root_dir = Path.cwd()
     workspace = W(cfg)
-    # snapshot = root_dir / 'snapshot.pt'
-    # print(f'snapshot is: {snapshot}')
-    # if snapshot.exists():
-    #     print(f'resuming: {snapshot}')
-    #     workspace.load_snapshot()
     workspace.sample()
 
 if __name__=='__main__':
