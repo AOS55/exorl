@@ -2,7 +2,7 @@
 
 # The Unsupervised Reinforcement Learning Suite (URLS)
 
-URLS aims to provide a set of unsupervised reinforcement learning algorithms and experiments for the purpose of researching the the applicability of unsupervised to a variety of paradigms. 
+URLS aims to provide a set of unsupervised reinforcement learning algorithms and experiments for the purpose of researching the applicability of unsupervised reinforcement learning to a variety of paradigms. 
 
 The codebase is based upon [URLB](https://github.com/rll-research/url_benchmark) and [ExORL](https://github.com/denisyarats/exorl). Further details are provided in the following papers:
 
