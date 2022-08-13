@@ -15,7 +15,7 @@ def main(cfg):
             os.system(f"python ./../../../pretrain.py agent={cfg.unsupervised_agent} domain={cfg.domain}")
         # TODO: add way to move data into new directory
         os.system(f"python ./../../../sampling.py agent={cfg.unsupervised_agent} task={cfg.task}")
-        os.system(f"python ./../../../train_offline.py agent={cfg.offline_agent}, task={cfg.task}")
+        os.system(f"python ./../../../train_offline.py agent={cfg.offline_agent} task={cfg.task}")
     else:
         print(f'Mode: {cfg.mode} is unrecognized')
 
