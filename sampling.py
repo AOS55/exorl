@@ -63,6 +63,9 @@ class Workspace:
 
         # get meta specs
         meta_specs = self.agent.get_meta_specs()
+        if cfg.data_type == 'unsupervised':
+            unsupervised_specs = specs.Array((1,), bool, 'constraint')
+            meta_specs = (meta_specs[0], unsupervised_specs)
 
         # create replay buffer
         data_specs = (self.train_env.observation_spec(),
@@ -130,7 +133,14 @@ class Workspace:
                 total_reward += time_step.reward
                 trajectory.append(time_step)
                 step += 1
-                self.replay_storage.add(time_step, meta)
+                
+                if self.cfg.data_type == 'unsupervised':
+                    # TODO: Provide a less hacky way of accessing info from environment
+                    info = self.sample_env._env._env._env._env.get_info()
+                    unsupervised_data = {'meta': meta, 'constraint': info['constraint']}
+                    self.replay_storage.add(time_step, unsupervised_data) 
+                else:
+                    self.replay_storage.add(time_step, meta)
 
             episode += 1
             skill_index = str(meta['skill'])
