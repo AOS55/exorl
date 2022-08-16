@@ -18,6 +18,7 @@ eval_every_frames: 10000
 num_eval_episodes: 10
 # sample settings
 num_sample_episodes: 2000010
+data_type: unsupervised  # either offline_rl or unsupervised changes the data collected from the environment
 # pretrained
 snapshot_ts: 100000
 snapshot_base_dir: ./../../../data/models/
