@@ -81,8 +81,8 @@ class OfflineReplayBuffer(IterableDataset):
         eps_fn = random.choice(self._episode_fns)
         return self._episodes[eps_fn]
 
-    def _relable_reward(self, episode):
-        return relable_episode(self._env, episode)
+    def _relabel_reward(self, episode):
+        return relabel_episode(self._env, episode)
 
     def _sample(self):
         episode = self._sample_episode()

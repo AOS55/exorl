@@ -25,7 +25,6 @@ class GymWrapper(dm_env.Environment):
     act_space = self._environment.action_space
     # self._observation_spec = _convert_to_spec(obs_space, name='observation')
     self._observation_spec = specs.Array(shape=obs_space.shape, dtype=obs_space.dtype, name='observation')
-    print(f'action_space: {isinstance(act_space, spaces.Discrete)}')
     self._action_spec = _convert_to_spec(act_space, name='action')
 
   def reset(self) -> dm_env.TimeStep:
