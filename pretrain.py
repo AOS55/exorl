@@ -64,10 +64,9 @@ class Workspace:
             task = PRIMAL_TASKS[self.cfg.domain]
 
         self.train_env = make(task, cfg.obs_type, cfg.frame_stack,
-                                  cfg.action_repeat, cfg.seed)
+                                 cfg.action_repeat, cfg.seed)
         self.eval_env = make(task, cfg.obs_type, cfg.frame_stack,
                                  cfg.action_repeat, cfg.seed)
-        
         # print(f"obs_type: {cfg.obs_type}")
         # print(f"obs_spec: {self.train_env.observation_spec()}")
         # print(f"action_spec: {self.train_env.action_spec()}")
