@@ -14,8 +14,14 @@ class Encoder(nn.Module):
         super().__init__()
 
         assert len(obs_shape) == 3
-        self.repr_dim = 32 * 35 * 35
-
+        if obs_shape == (3, 64, 64):
+            self.repr_dim = 32 * 25 * 25
+        elif obs_shape == (9, 64, 64):
+            self.repr_dim = 32 * 25 * 25
+        elif obs_shape == (3, 84, 84):
+            self.repr_dim = 32 * 35 * 35
+        else:
+            print(f'obs_shape: {obs_shape} is an invalid image representation')
         self.convnet = nn.Sequential(nn.Conv2d(obs_shape[0], 32, 3, stride=2),
                                      nn.ReLU(), nn.Conv2d(32, 32, 3, stride=1),
                                      nn.ReLU(), nn.Conv2d(32, 32, 3, stride=1),
@@ -34,7 +40,7 @@ class Encoder(nn.Module):
 class Actor(nn.Module):
     def __init__(self, obs_type, obs_dim, action_dim, feature_dim, hidden_dim):
         super().__init__()
-
+        
         feature_dim = feature_dim if obs_type == 'pixels' else hidden_dim
 
         self.trunk = nn.Sequential(nn.Linear(obs_dim, feature_dim),
@@ -73,7 +79,6 @@ class Critic(nn.Module):
         super().__init__()
 
         self.obs_type = obs_type
-
         if obs_type == 'pixels':
             # for pixels actions will be added after trunk
             self.trunk = nn.Sequential(nn.Linear(obs_dim, feature_dim),
@@ -106,8 +111,7 @@ class Critic(nn.Module):
         self.apply(utils.weight_init)
 
     def forward(self, obs, action):
-        inpt = obs if self.obs_type == 'pixels' else torch.cat([obs, action],
-                                                               dim=-1)
+        inpt = obs if self.obs_type == 'pixels' else torch.cat([obs, action], dim=-1)
         h = self.trunk(inpt)
         h = torch.cat([h, action], dim=-1) if self.obs_type == 'pixels' else h
 
@@ -220,7 +224,7 @@ class DDPGAgent:
             value = torch.as_tensor(value, device=self.device).unsqueeze(0)
             inputs.append(value)
         inpt = torch.cat(inputs, dim=-1)
-        #assert obs.shape[-1] == self.obs_shape[-1]
+        # assert obs.shape[-1] == self.obs_shape[-1]
         stddev = utils.schedule(self.stddev_schedule, step)
         dist = self.actor(inpt, stddev)
         if eval_mode:
