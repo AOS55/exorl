@@ -47,7 +47,7 @@ class SimplePointBot(Env, utils.EzPickle):
         self.action_space = Box(-np.ones(2) * MAX_FORCE,
                                 np.ones(2) * MAX_FORCE)
         if from_pixels:
-            self.observation_space = Box(-1, 1, (3, 64, 64))
+            self.observation_space = Box(-1, 1, (3, 64, 64), dtype=np.uint8)
         else:
             self.observation_space = Box(-np.ones(2) * np.float('inf'),
                                          np.ones(2) * np.float('inf'))
