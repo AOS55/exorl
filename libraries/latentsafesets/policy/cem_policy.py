@@ -6,9 +6,8 @@ Code inspired by https://github.com/kchua/handful-of-trials/blob/master/dmbrl/co
 
 from .policy import Policy
 
-import latentsafesets.utils.pytorch_utils as ptu
-import latentsafesets.utils.spb_utils as spbu
-from latentsafesets.modules import VanillaVAE, PETSDynamics, ValueFunction, ConstraintEstimator, \
+from ..utils import pytorch_utils as ptu
+from ..modules import VanillaVAE, PETSDynamics, ValueFunction, ConstraintEstimator, \
     GoalIndicator
 
 import torch

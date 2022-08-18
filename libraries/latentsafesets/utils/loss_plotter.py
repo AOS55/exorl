@@ -24,7 +24,7 @@ class LossPlotter:
                 self.data[key] = [ra]
 
     def plot(self):
-        import latentsafesets.utils.plot_utils as pu
+        from ..utils import plot_utils as pu
         
         for key in self.data:
             losses = self.data[key]

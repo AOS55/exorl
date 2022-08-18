@@ -1,5 +1,5 @@
-import latentsafesets.utils.pytorch_utils as ptu
-from latentsafesets.model import GenericNet
+from  ..utils import pytorch_utils as ptu
+from ..model import GenericNet
 from .interfaces import EncodedModule
 
 import torch

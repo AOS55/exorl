@@ -1,7 +1,4 @@
-import latentsafesets.utils.pytorch_utils as ptu
-import latentsafesets.utils.spb_utils as spbu
-import latentsafesets.utils.bottleneck_utils as bnnu
-from latentsafesets.envs import SimplePointBot, BottleNeck, SimpleVelocityBot   
+from ..utils import pytorch_utils as ptu
 
 from sys import platform
 if platform == 'darwin':

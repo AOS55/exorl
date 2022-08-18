@@ -1,5 +1,5 @@
 import numpy as np
-import latentsafesets.utils.pytorch_utils as ptu
+from ..utils import pytorch_utils as ptu
 
 
 class EncodedReplayBuffer:

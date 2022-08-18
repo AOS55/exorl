@@ -9,8 +9,8 @@ from datetime import datetime
 import random
 from tqdm import tqdm, trange
 
-from latentsafesets.utils.replay_buffer_encoded import EncodedReplayBuffer
-from latentsafesets.utils.replay_buffer import ReplayBuffer
+from ..utils.replay_buffer_encoded import EncodedReplayBuffer
+from ..utils.replay_buffer import ReplayBuffer
 from gym.wrappers import FrameStack
 
 log = logging.getLogger("utils")
@@ -101,31 +101,20 @@ def save_trajectory(trajectory, file, n):
 
 def load_trajectories(num_traj, file):
     log.info('Loading trajectories from %s' % file)
-
     if not os.path.exists(file):
         raise RuntimeError("Could not find directory %s." % file)
     trajectories = []
     iterator = range(num_traj) if num_traj <= 200 else trange(num_traj)
     for i in iterator:
-        if not os.path.exists(os.path.join(file, '%d.json' % i)):
+        if not os.path.exists(os.path.join(file, 'episode_%d_100.npz' % i)):
+            print(f"path: {os.path.join(file, 'episode_%d_100.npz' % i)}")
             log.info('Could not find %d' % i)
             continue
-        im_fields = ('obs', 'next_obs')
-        with open(os.path.join(file, '%d.json' % i), 'r') as f:
-            trajectory = json.load(f)
-        im_dat = {}
-
-        for field in im_fields:
-            f = os.path.join(file, "%d_%s.npy" % (i, field))
-            if os.path.exists(file):
-                dat = np.load(f)
-                im_dat[field] = dat.astype(np.uint8)
-
-        for j, frame in list(enumerate(trajectory)):
-            for key in im_dat:
-                frame[key] = im_dat[key][j]
-        trajectories.append(trajectory)
-
+        trajectory = np.load(os.path.join(file, 'episode_%d_100.npz' % i))
+        data = {}
+        for key in trajectory.files:
+            data[key] = trajectory[key]
+        trajectories.append(data)
     return trajectories
 
 
@@ -179,57 +168,57 @@ def make_env(params, monitoring=False):
     return env
 
 
-def make_modules(params, ss=False, val=False, dyn=False,
+def make_modules(cfg, ss=False, val=False, dyn=False,
                  gi=False, constr=False):
-    from latentsafesets.modules import VanillaVAE, ValueEnsemble, \
+    from ..modules import VanillaVAE, ValueEnsemble, \
         ValueFunction, PETSDynamics, GoalIndicator, ConstraintEstimator, BCSafeSet, \
         BellmanSafeSet
-    import latentsafesets.utils.pytorch_utils as ptu
+    from ..utils import pytorch_utils as ptu
 
     modules = {}
 
-    encoder = VanillaVAE(params)
-    if params['enc_checkpoint']:
-        encoder.load(params['enc_checkpoint'])
+    encoder = VanillaVAE(cfg)
+    if cfg.enc_checkpoint:
+        encoder.load(cfg.enc_checkpoint)
     modules['enc'] = encoder
 
     if ss:
-        safe_set_type = params['safe_set_type']
+        safe_set_type = cfg.safe_set_type
         if safe_set_type == 'bc':
-            safe_set = BCSafeSet(encoder, params)
+            safe_set = BCSafeSet(encoder, cfg)
         elif safe_set_type == 'bellman':
-            safe_set = BellmanSafeSet(encoder, params)
+            safe_set = BellmanSafeSet(encoder, cfg)
         else:
             raise NotImplementedError
-        if params['safe_set_checkpoint']:
-            safe_set.load(params['safe_set_checkpoint'])
+        if cfg.safe_set_checkpoint:
+            safe_set.load(cfg.safe_set_checkpoint)
         modules['ss'] = safe_set
 
     if val:
-        if params['val_ensemble']:
-            value_func = ValueEnsemble(encoder, params).to(ptu.TORCH_DEVICE)
+        if cfg.val_ensemble:
+            value_func = ValueEnsemble(encoder, cfg).to(ptu.TORCH_DEVICE)
         else:
-            value_func = ValueFunction(encoder, params).to(ptu.TORCH_DEVICE)
-        if params['val_checkpoint']:
-            value_func.load(params['val_checkpoint'])
+            value_func = ValueFunction(encoder, cfg).to(ptu.TORCH_DEVICE)
+        if cfg.val_checkpoint:
+            value_func.load(cfg.val_checkpoint)
         modules['val'] = value_func
 
     if dyn:
-        dynamics = PETSDynamics(encoder, params)
-        if params['dyn_checkpoint']:
-            dynamics.load(params['dyn_checkpoint'])
+        dynamics = PETSDynamics(encoder, cfg)
+        if cfg.dyn_checkpoint:
+            dynamics.load(cfg.dyn_checkpoint)
         modules['dyn'] = dynamics
 
     if gi:
-        goal_indicator = GoalIndicator(encoder, params).to(ptu.TORCH_DEVICE)
-        if params['gi_checkpoint']:
-            goal_indicator.load(params['gi_checkpoint'])
+        goal_indicator = GoalIndicator(encoder, cfg).to(ptu.TORCH_DEVICE)
+        if cfg.gi_checkpoint:
+            goal_indicator.load(cfg.gi_checkpoint)
         modules['gi'] = goal_indicator
 
     if constr:
-        constraint = ConstraintEstimator(encoder, params).to(ptu.TORCH_DEVICE)
-        if params['constr_checkpoint']:
-            constraint.load(params['constr_checkpoint'])
+        constraint = ConstraintEstimator(encoder, cfg).to(ptu.TORCH_DEVICE)
+        if cfg.constr_checkpoint:
+            constraint.load(cfg.constr_checkpoint)
         modules['constr'] = constraint
 
     return modules

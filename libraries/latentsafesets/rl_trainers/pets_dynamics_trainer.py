@@ -1,6 +1,5 @@
 from .trainer import Trainer
-import latentsafesets.utils.spb_utils as spbu
-import latentsafesets.utils.plot_utils as pu
+from ..utils import plot_utils as pu
 
 import logging
 from tqdm import trange

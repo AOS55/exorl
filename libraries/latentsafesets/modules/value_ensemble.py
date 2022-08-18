@@ -1,6 +1,6 @@
-import latentsafesets.utils.pytorch_utils as ptu
+from ..utils import pytorch_utils as ptu
 from .interfaces import EncodedModule
-from latentsafesets.modules import ValueFunction
+from ..modules import ValueFunction
 
 import torch
 import torch.nn as nn

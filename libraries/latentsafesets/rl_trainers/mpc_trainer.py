@@ -1,7 +1,7 @@
-from latentsafesets.rl_trainers import VAETrainer, SafeSetTrainer, Trainer, \
+from ..rl_trainers import VAETrainer, SafeSetTrainer, Trainer, \
     ValueTrainer, ConstraintTrainer, GoalIndicatorTrainer, PETSDynamicsTrainer
 
-from latentsafesets.utils import LossPlotter, EncoderDataLoader
+from ..utils import LossPlotter, EncoderDataLoader
 
 import os
 

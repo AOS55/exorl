@@ -1,6 +1,6 @@
 from .trainer import Trainer
-import latentsafesets.utils.pytorch_utils as ptu
-from latentsafesets.modules import VanillaVAE
+from ..utils import pytorch_utils as ptu
+from ..modules import VanillaVAE
 
 import torch
 from torchvision.utils import save_image
@@ -13,13 +13,13 @@ log = logging.getLogger("dyn train")
 
 
 class VAETrainer(Trainer):
-    def __init__(self, params, vae: VanillaVAE, loss_plotter):
-        self.params = params
+    def __init__(self, cfg, vae: VanillaVAE, loss_plotter):
+        self.cfg = cfg
         self.vae = vae
         self.loss_plotter = loss_plotter
 
-        self.frame_stack = params['frame_stack']
-        self.d_latent = params['d_latent']
+        self.frame_stack = cfg.frame_stack
+        self.d_latent = cfg.d_latent
 
     def initial_train(self, enc_data_loader, update_dir, force_train=False):
         if self.vae.trained and not force_train:
@@ -27,19 +27,19 @@ class VAETrainer(Trainer):
 
         log.info('Beginning vae initial optimization')
 
-        for i in range(self.params['enc_init_iters']):
-            obs = enc_data_loader.sample(self.params['enc_batch_size'])
+        for i in range(self.cfg.enc_init_iters):
+            obs = enc_data_loader.sample(self.cfg.enc_batch_size)
 
             loss, info = self.vae.update(obs)
             self.loss_plotter.add_data(info)
 
-            if i % self.params['log_freq'] == 0:
+            if i % self.cfg.log_freq == 0:
                 self.loss_plotter.print(i)
-            if i % self.params['plot_freq'] == 0:
+            if i % self.cfg.plot_freq == 0:
                 log.info('Creating vae visualizaton')
                 self.loss_plotter.plot()
                 self.plot_vae(obs, update_dir, i=i)
-            if i % self.params['checkpoint_freq'] == 0 and i > 0:
+            if i % self.cfg.checkpoint_freq == 0 and i > 0:
                 self.vae.save(os.path.join(update_dir, 'vae_%d.pth' % i))
 
         self.vae.save(os.path.join(update_dir, 'vae.pth'))

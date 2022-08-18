@@ -1,4 +1,4 @@
-import latentsafesets.utils as utils
+from ..utils import utils
 
 import argparse
 import os

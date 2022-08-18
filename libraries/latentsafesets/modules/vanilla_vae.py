@@ -1,5 +1,5 @@
-from latentsafesets.model import VAEEncoder, VAEDecoder
-import latentsafesets.utils.pytorch_utils as ptu
+from ..model import VAEEncoder, VAEDecoder
+from ..utils import pytorch_utils as ptu
 
 import torch
 import torch.nn as nn
@@ -9,25 +9,25 @@ import torchvision.transforms as transforms
 
 import numpy as np
 
-
+# TODO: Convert to hydra type
 class VanillaVAE(nn.Module):
 
-    def __init__(self, params):
+    def __init__(self, cfg):
         super(VanillaVAE, self).__init__()
 
-        self.d_obs = params['d_obs']
-        self.d_latent = params['d_latent']
-        self.kl_multiplier = params['enc_kl_multiplier']
+        self.d_obs = cfg.d_obs
+        self.d_latent = cfg.d_latent
+        self.kl_multiplier = cfg.enc_kl_multiplier
         self.trained = False
 
-        self.frame_stack = params['frame_stack']
+        self.frame_stack = cfg.frame_stack
         self.encoder = VAEEncoder(self.d_obs, self.d_latent).to(ptu.TORCH_DEVICE)
         self.decoder = VAEDecoder(self.d_obs, self.d_latent).to(ptu.TORCH_DEVICE)
         self.transform = transforms.RandomResizedCrop(64, scale=(0.8, 1.0)) \
-            if params['enc_data_aug'] \
+            if cfg.enc_data_aug \
             else lambda x: x
 
-        self.learning_rate = params['enc_lr']
+        self.learning_rate = cfg.enc_lr
         param_list = list(self.encoder.parameters()) + list(self.decoder.parameters())
         self.optimizer = optim.Adam(param_list, lr=self.learning_rate)
 

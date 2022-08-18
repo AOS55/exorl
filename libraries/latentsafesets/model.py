@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-import latentsafesets.utils.pytorch_utils as ptu
+from .utils import pytorch_utils as ptu
 
 
 class Flatten(nn.Module):
