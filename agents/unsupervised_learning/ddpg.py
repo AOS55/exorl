@@ -20,6 +20,8 @@ class Encoder(nn.Module):
             self.repr_dim = 32 * 25 * 25
         elif obs_shape == (3, 84, 84):
             self.repr_dim = 32 * 35 * 35
+        elif obs_shape == (9, 84, 84):
+            self.repr_dim = 32 * 35 * 35
         else:
             print(f'obs_shape: {obs_shape} is an invalid image representation')
         self.convnet = nn.Sequential(nn.Conv2d(obs_shape[0], 32, 3, stride=2),
