@@ -22,8 +22,8 @@ plot_freq: 500
 checkpoint_freq: 2000
 seed: 1
 device: cuda
-use_tb: false
-use_wandb: false
+use_tb: False
+use_wandb: False
 # experiment
 experiment: exp
 
