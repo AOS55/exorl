@@ -16,24 +16,24 @@ class PETSDynamics(nn.Module, EncodedModule):
     Implementation of PETS dynamics in a latent space
     """
 
-    def __init__(self, encoder, params: dict):
+    def __init__(self, encoder, cfg):
         super(PETSDynamics, self).__init__()
         EncodedModule.__init__(self, encoder)
 
-        self.d_obs = params['d_obs']
-        self.d_latent = params['d_latent']
-        self.d_act = params['d_act']
+        self.d_obs = cfg.d_obs
+        self.d_latent = cfg.d_latent
+        self.d_act = cfg.d_act
 
-        self.plot_freq = params['plot_freq']
-        self.checkpoint_freq = params['checkpoint_freq']
-        self.normalize_delta = params['dyn_normalize_delta']
-        self.n_particles = params['n_particles']
+        self.plot_freq = cfg.plot_freq
+        self.checkpoint_freq = cfg.checkpoint_freq
+        self.normalize_delta = cfg.dyn_normalize_delta
+        self.n_particles = cfg.n_particles
         self.trained = False
 
         # Dynamics args
-        self.n_models = params['dyn_n_models']
-        size = params['dyn_size']
-        n_layers = params['dyn_n_layers']
+        self.n_models = cfg.dyn_n_models
+        size = cfg.dyn_size
+        n_layers = cfg.dyn_n_layers
         self.models = nn.ModuleList([
             ProbabilisticDynamicsModel(self.d_latent, self.d_act, size=size, n_layers=n_layers)
                 .to(ptu.TORCH_DEVICE)
@@ -41,9 +41,9 @@ class PETSDynamics(nn.Module, EncodedModule):
         ])
         self.delta_rms = utils.RunningMeanStd(shape=(self.d_latent,))
 
-        self.logdir = params['logdir']
+        self.logdir = cfg.log_dir
 
-        self.learning_rate = params['dyn_lr']
+        self.learning_rate = cfg.dyn_lr
         self.param_list = []
         for model in self.models:
             self.param_list += list(model.parameters())

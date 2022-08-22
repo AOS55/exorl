@@ -8,7 +8,7 @@ import torch.nn as nn
 
 class ValueEnsemble(nn.Module, EncodedModule):
 
-    def __init__(self, encoder, params: dict):
+    def __init__(self, encoder, cfg):
         """
         Initializes a value function Function
         """
@@ -16,11 +16,11 @@ class ValueEnsemble(nn.Module, EncodedModule):
         EncodedModule.__init__(self, encoder)
         self.trained = False
 
-        self.n_models = params['val_n_models']
-        self.reduction = params['val_reduction']
+        self.n_models = cfg.val_n_models
+        self.reduction = cfg.val_reduction
 
         self.models = nn.ModuleList([
-            ValueFunction(encoder, params) for _ in range(self.n_models)
+            ValueFunction(encoder, cfg) for _ in range(self.n_models)
         ])
 
     def reduce(self, out):

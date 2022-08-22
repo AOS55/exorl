@@ -79,7 +79,8 @@ class SimplePointBot(Env, utils.EzPickle):
             "reward": cur_reward,
             "state": old_state,
             "next_state": next_state,
-            "action": a
+            "action": a,
+            "done": self.done
         }
 
     def reset(self, random_start=False):

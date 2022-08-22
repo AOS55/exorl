@@ -11,25 +11,25 @@ class ConstraintEstimator(nn.Module, EncodedModule):
     Simple constraint predictor using binary cross entropy
     """
 
-    def __init__(self, encoder, params: dict):
+    def __init__(self, encoder, cfg):
         """
         Initializes a constraint estimator
         """
         super(ConstraintEstimator, self).__init__()
         EncodedModule.__init__(self, encoder)
 
-        self.d_obs = params['d_obs']
-        self.d_latent = params['d_latent']
-        self.batch_size = params['constr_batch_size']
+        self.d_obs = cfg.d_obs
+        self.d_latent = cfg.d_latent
+        self.batch_size = cfg.constr_batch_size
         self.targ_update_counter = 0
         self.loss_func = torch.nn.BCEWithLogitsLoss()
         self.trained = False
 
-        self.net = GenericNet(self.d_latent, 1, params['constr_n_hidden'],
-                              params['constr_hidden_size']) \
+        self.net = GenericNet(self.d_latent, 1, cfg.constr_n_hidden,
+                              cfg.constr_hidden_size) \
             .to(ptu.TORCH_DEVICE)
 
-        lr = params['constr_lr']
+        lr = cfg.constr_lr
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=lr)
 
     def forward(self, obs, already_embedded=False):

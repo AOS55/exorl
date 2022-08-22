@@ -371,7 +371,7 @@ def make(name, obs_type, frame_stack, action_repeat, seed):
     assert domain in ENV_TYPES, f'task domain: {domain} is not recognized'
     env_type = ENV_TYPES[domain]
     if env_type == 'dmc_jaco':
-        make_fn = _make_jaco 
+        make_fn = _make_jaco
     elif env_type == 'gym':
         make_fn = _make_gym
     elif env_type == 'safe':

@@ -11,25 +11,25 @@ class GoalIndicator(nn.Module, EncodedModule):
     Simple goal set predictor using binary cross entropy
     """
 
-    def __init__(self, encoder, params: dict):
+    def __init__(self, encoder, cfg):
         """
         Initializes a goal indicator
         """
         super(GoalIndicator, self).__init__()
         EncodedModule.__init__(self, encoder)
 
-        self.d_obs = params['d_obs']
-        self.d_latent = params['d_latent']
-        self.batch_size = params['gi_batch_size']
+        self.d_obs = cfg.d_obs
+        self.d_latent = cfg.d_latent
+        self.batch_size = cfg.gi_batch_size
         self.targ_update_counter = 0
         self.loss_func = torch.nn.BCEWithLogitsLoss()
         self.trained = False
 
-        self.net = GenericNet(self.d_latent, 1, params['gi_n_hidden'],
-                              params['gi_hidden_size']) \
+        self.net = GenericNet(self.d_latent, 1, cfg.gi_n_hidden,
+                              cfg.gi_hidden_size) \
             .to(ptu.TORCH_DEVICE)
 
-        lr = params['gi_lr']
+        lr = cfg.gi_lr
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=lr)
 
     def forward(self, obs, already_embedded=False):

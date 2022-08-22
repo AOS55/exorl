@@ -27,7 +27,7 @@ class CEMSafeSetPolicy(Policy):
                  dynamics_model: PETSDynamics,
                  constraint_function: ConstraintEstimator,
                  goal_indicator: GoalIndicator,
-                 params):
+                 cfg):
         log.info("setting up safe set and dynamics model")
 
         self.env = env
@@ -38,24 +38,24 @@ class CEMSafeSetPolicy(Policy):
         self.constraint_function = constraint_function
         self.goal_indicator = goal_indicator
 
-        self.logdir = params['logdir']
+        self.logdir = cfg.logdir
 
-        self.d_act = params['d_act']
-        self.d_obs = params['d_obs']
-        self.d_latent = params['d_latent']
+        self.d_act = cfg.d_act
+        self.d_obs = cfg.d_obs
+        self.d_latent = cfg.d_latent
         self.ac_ub, self.ac_lb = env.action_space.high, env.action_space.low
-        self.plan_hor = params['plan_hor']
-        self.random_percent = params['random_percent']
-        self.popsize = params['num_candidates']
-        self.num_elites = params['num_elites']
-        self.max_iters = params['max_iters']
-        self.safe_set_thresh = params['safe_set_thresh']
-        self.safe_set_thresh_mult = params['safe_set_thresh_mult']
-        self.safe_set_thresh_mult_iters = params['safe_set_thresh_mult_iters']
-        self.constraint_thresh = params['constr_thresh']
-        self.goal_thresh = params['gi_thresh']
-        self.ignore_safe_set = params['safe_set_ignore']
-        self.ignore_constraints = params['constr_ignore']
+        self.plan_hor = cfg.plan_hor
+        self.random_percent = cfg.random_percent
+        self.popsize = cfg.num_candidates
+        self.num_elites = cfg.num_elites
+        self.max_iters = cfg.max_iters
+        self.safe_set_thresh = cfg.safe_set_thresh
+        self.safe_set_thresh_mult = cfg.safe_set_thresh_mult
+        self.safe_set_thresh_mult_iters = cfg.safe_set_thresh_mult_iters
+        self.constraint_thresh = cfg.constr_thresh
+        self.goal_thresh = cfg.gi_thresh
+        self.ignore_safe_set = cfg.safe_set_ignore
+        self.ignore_constraints = cfg.constr_ignore
 
         self.mean = torch.zeros(self.d_act)
         self.std = torch.ones(self.d_act)

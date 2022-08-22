@@ -24,6 +24,7 @@ class EncodedReplayBuffer:
         Stores transitions
         :param transitions: a list of dictionaries encoding transitions. Keys can be anything
         """
+        print(f'transitions are: {transitions.keys()}')
         assert transitions[-1]['done'] > 0, "Last transition must be end of trajectory"
         for transition in transitions:
             self.store_transition(transition)

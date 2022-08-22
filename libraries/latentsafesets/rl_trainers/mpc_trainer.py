@@ -8,24 +8,24 @@ import os
 
 class MPCTrainer(Trainer):
 
-    def __init__(self, env, params, modules):
+    def __init__(self, env, cfg, modules):
 
-        self.params = params
+        self.cfg = cfg
         self.env = env
 
-        self.logdir = params['logdir']
+        self.logdir = cfg.logdir
 
-        loss_plotter = LossPlotter(os.path.join(params['logdir'], 'loss_plots'))
-        self.encoder_data_loader = EncoderDataLoader(params)
+        loss_plotter = LossPlotter(os.path.join(cfg.logdir, 'loss_plots'))
+        self.encoder_data_loader = EncoderDataLoader(env, frame_stack=cfg.frame_stack)
 
         self.trainers = []
 
-        self.trainers.append(VAETrainer(params, modules['enc'], loss_plotter))
-        self.trainers.append(PETSDynamicsTrainer(params, modules['dyn'], loss_plotter))
-        self.trainers.append(ValueTrainer(env, params, modules['val'], loss_plotter))
-        self.trainers.append(SafeSetTrainer(env, params, modules['ss'], loss_plotter))
-        self.trainers.append(ConstraintTrainer(env, params, modules['constr'], loss_plotter))
-        self.trainers.append(GoalIndicatorTrainer(env, params, modules['gi'], loss_plotter))
+        self.trainers.append(VAETrainer(cfg, modules['enc'], loss_plotter))
+        self.trainers.append(PETSDynamicsTrainer(cfg, modules['dyn'], loss_plotter))
+        self.trainers.append(ValueTrainer(env, cfg, modules['val'], loss_plotter))
+        self.trainers.append(SafeSetTrainer(env, cfg, modules['ss'], loss_plotter))
+        self.trainers.append(ConstraintTrainer(env, cfg, modules['constr'], loss_plotter))
+        self.trainers.append(GoalIndicatorTrainer(env, cfg, modules['gi'], loss_plotter))
 
     def initial_train(self, replay_buffer):
         update_dir = os.path.join(self.logdir, 'initial_train')

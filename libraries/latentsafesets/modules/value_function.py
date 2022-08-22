@@ -8,31 +8,31 @@ import torch.nn as nn
 
 class ValueFunction(nn.Module, EncodedModule):
 
-    def __init__(self, encoder, params: dict):
+    def __init__(self, encoder, cfg):
         """
         Initializes a value function Function
         """
         super(ValueFunction, self).__init__()
         EncodedModule.__init__(self, encoder)
 
-        self.d_obs = params['d_obs']
-        self.d_latent = params['d_latent']
-        self.discount = params['val_discount']
-        self.targ_update_frequency = params['val_targ_update_freq']
-        self.targ_update_rate = params['val_targ_update_rate']
+        self.d_obs = cfg.d_obs
+        self.d_latent = cfg.d_latent
+        self.discount = cfg.val_discount
+        self.targ_update_frequency = cfg.val_targ_update_freq
+        self.targ_update_rate = cfg.val_targ_update_rate
         self.targ_update_counter = 0
         self.loss_func = torch.nn.SmoothL1Loss()
         self.trained = False
 
-        self.value_net = GenericNet(self.d_latent, 1, params['val_n_hidden'],
-                                    params['val_hidden_size']).to(ptu.TORCH_DEVICE)
-        self.value_net_target = GenericNet(self.d_latent, 1, params['val_n_hidden'],
-                                           params['val_hidden_size']).to(ptu.TORCH_DEVICE)
+        self.value_net = GenericNet(self.d_latent, 1, cfg.val_n_hidden,
+                                    cfg.val_hidden_size).to(ptu.TORCH_DEVICE)
+        self.value_net_target = GenericNet(self.d_latent, 1, cfg.val_n_hidden,
+                                           cfg.val_hidden_size).to(ptu.TORCH_DEVICE)
         for param in self.value_net_target.parameters():
             param.requires_grad = False
         self.update_target(1)
 
-        lr = params['val_lr']
+        lr = cfg.val_lr
         self.optimizer = torch.optim.Adam(self.value_net.parameters(), lr=lr)
 
     def forward(self, obs, already_embedded=False):

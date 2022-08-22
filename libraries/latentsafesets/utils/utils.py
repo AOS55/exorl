@@ -118,11 +118,16 @@ def load_trajectories(num_traj, file):
     return trajectories
 
 
-def load_replay_buffer(params, encoder=None, first_only=False):
+def load_replay_buffer(cfg, encoder=None, first_only=False):
+    import os
+    print(f'cwd: {os.getcwd()}')
     log.info('Loading data')
     trajectories = []
-    for directory, num in list(zip(params['data_dirs'], params['data_counts'])):
-        real_dir = os.path.join('data', directory)
+    data_dirs = [cfg.data_dirs]
+    data_counts = [cfg.data_counts]
+    for directory, num in list(zip(data_dirs, data_counts)):
+        print(f'directory is: {directory}')
+        real_dir = os.path.join('../../../data', directory)
         trajectories += load_trajectories(num, file=real_dir)
         if first_only:
             print('wahoo')
@@ -133,9 +138,9 @@ def load_replay_buffer(params, encoder=None, first_only=False):
     # Shuffle array so that when the replay fills up it doesn't remove one dataset before the other
     random.shuffle(trajectories)
     if encoder is not None:
-        replay_buffer = EncodedReplayBuffer(encoder, params['buffer_size'])
+        replay_buffer = EncodedReplayBuffer(encoder, cfg.buffer_size)
     else:
-        replay_buffer = ReplayBuffer(params['buffer_size'])
+        replay_buffer = ReplayBuffer(cfg.buffer_size)
 
     for trajectory in tqdm(trajectories):
         replay_buffer.store_transitions(trajectory)
@@ -168,8 +173,7 @@ def make_env(params, monitoring=False):
     return env
 
 
-def make_modules(cfg, ss=False, val=False, dyn=False,
-                 gi=False, constr=False):
+def make_modules(cfg, ss=False, val=False, dyn=False, gi=False, constr=False):
     from ..modules import VanillaVAE, ValueEnsemble, \
         ValueFunction, PETSDynamics, GoalIndicator, ConstraintEstimator, BCSafeSet, \
         BellmanSafeSet
@@ -229,7 +233,7 @@ class RunningMeanStd(nn.Module):
     def __init__(self, epsilon=1e-4, shape=()):
         super(RunningMeanStd, self).__init__()
 
-        from latentsafesets.utils.pytorch_utils import TORCH_DEVICE
+        from ..utils.pytorch_utils import TORCH_DEVICE
 
         # We store these as parameters so they'll be stored in dynamic model state dicts
         self.mean = nn.Parameter(torch.zeros(shape, dtype=torch.float32, device=TORCH_DEVICE),
