@@ -13,10 +13,10 @@ class MPCTrainer(Trainer):
         self.cfg = cfg
         self.env = env
 
-        self.logdir = cfg.logdir
+        self.logdir = cfg.log_dir
 
-        loss_plotter = LossPlotter(os.path.join(cfg.logdir, 'loss_plots'))
-        self.encoder_data_loader = EncoderDataLoader(env, frame_stack=cfg.frame_stack)
+        loss_plotter = LossPlotter(os.path.join(self.logdir, 'loss_plots'))
+        self.encoder_data_loader = EncoderDataLoader(cfg.env, frame_stack=cfg.frame_stack)
 
         self.trainers = []
 
