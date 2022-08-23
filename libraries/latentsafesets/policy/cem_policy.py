@@ -38,7 +38,7 @@ class CEMSafeSetPolicy(Policy):
         self.constraint_function = constraint_function
         self.goal_indicator = goal_indicator
 
-        self.logdir = cfg.logdir
+        self.logdir = cfg.log_dir
 
         self.d_act = cfg.d_act
         self.d_obs = cfg.d_obs
