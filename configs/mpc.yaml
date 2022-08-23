@@ -15,9 +15,9 @@ log_dir: ../../../data/models/${obs_type}/${env}/${agent.name}/${seed}
 
 # Module Settings
 # Encoder
-enc_checkpoint: False
+enc_checkpoint: ../../../models/spb/vae.pth
 d_latent: 32
-d_obs: [3, 64, 64]
+d_obs: [3, 3, 64, 64]
 enc_init_iters: 100000
 enc_kl_multiplier: 1e-6
 enc_data_aug: false
@@ -27,6 +27,7 @@ plot_freq: 500
 checkpoint_freq: 2000
 # Safe-Set
 safe_set_checkpoint: False
+safe_set_ensemble: True
 d_act: 2
 plan_hor: 5
 random_percent: 1.0
@@ -50,6 +51,8 @@ val_checkpoint: False
 val_n_models: 5
 val_reduction: mean
 val_discount: 0.99
+val_batch_size: 256
+val_init_iters: 10000
 val_targ_update_freq: 100
 val_targ_update_rate: 1.0
 val_n_hidden: 3
@@ -60,6 +63,8 @@ horizon: 100
 # PETS Dynamics
 dyn_checkpoint: False
 dyn_normalize_delta: False
+dyn_init_iters: 10000
+dyn_batch_size: 256
 n_particles: 20
 dyn_n_models: 5
 dyn_size: 128
