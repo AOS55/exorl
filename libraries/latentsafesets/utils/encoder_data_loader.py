@@ -6,12 +6,12 @@ import os
 
 
 class EncoderDataLoader:
-    def __init__(self, env, frame_stack):
-        self.data_dir = os.path.join('../../../data/data_images', env)
-        self.env = env
+    def __init__(self, env_name, frame_stack):
+        self.data_dir = os.path.join('../../../data/data_images', env_name)
+        self.env = env_name
         self.frame_stack = frame_stack
         self.n_images = len(os.listdir(self.data_dir)) // self.frame_stack
-        if env == 'Robot':
+        if env_name == 'Robot':
             self.transform = transforms.Compose([
                 transforms.RandomResizedCrop(64, scale=(0.8, 1.0)),
                 transforms.RandomRotation(20),
