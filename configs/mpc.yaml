@@ -11,6 +11,7 @@ frame_stack: 3
 action_repeat: 1
 discount: 0.99
 log_freq: 100
+plot_freq: 500
 log_dir: ../../../data/models/${obs_type}/${env}/${agent.name}/${seed}
 
 # Module Settings
@@ -23,7 +24,6 @@ enc_kl_multiplier: 1e-6
 enc_data_aug: false
 enc_lr: 1e-4
 enc_batch_size: 256
-plot_freq: 500
 checkpoint_freq: 2000
 # Safe-Set
 safe_set_checkpoint: False
@@ -70,6 +70,8 @@ dyn_n_models: 5
 dyn_size: 128
 dyn_n_layers: 3
 dyn_lr: 1e-3
+constr_init_iters: 10000
+constr_thresh: 0.2
 # Goal Indicator
 gi_checkpoint: False
 gi_batch_size: 256
