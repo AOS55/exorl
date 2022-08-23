@@ -118,9 +118,27 @@ def load_trajectories(num_traj, file):
     return trajectories
 
 
+def reverse_loaded_dict(trajectories):
+    # Covert dictionary of lists to list of dictionaries
+    dict_keys = list(trajectories[0].keys())
+    if 'skill' in dict_keys:
+        dict_keys.remove('skill')
+    new_trajectories = []
+    for trajectory in trajectories:
+        new_trajectory = []
+        for idx in range(len(trajectory[dict_keys[0]])-1):
+            new_dict = {}
+            for key in dict_keys:
+                if key == 'observation':
+                    new_dict['obs'] = trajectory[key][idx]
+                else:
+                    new_dict[key] = trajectory[key][idx]
+            new_dict['next_obs'] = trajectory['observation'][idx]
+            new_trajectory.append(new_dict)
+        new_trajectories.append(new_trajectory)
+    return new_trajectories
+
 def load_replay_buffer(cfg, encoder=None, first_only=False):
-    import os
-    print(f'cwd: {os.getcwd()}')
     log.info('Loading data')
     trajectories = []
     data_dirs = [cfg.data_dirs]
@@ -129,6 +147,7 @@ def load_replay_buffer(cfg, encoder=None, first_only=False):
         print(f'directory is: {directory}')
         real_dir = os.path.join('../../../data', directory)
         trajectories += load_trajectories(num, file=real_dir)
+        trajectories = reverse_loaded_dict(trajectories)
         if first_only:
             print('wahoo')
             break
