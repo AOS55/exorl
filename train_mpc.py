@@ -74,11 +74,11 @@ class Workspace:
 
         self.replay_buffer = utils.load_replay_buffer(cfg, self.encoder)
         self.trainer = MPCTrainer(self.train_env, cfg, modules)
-        self.ttrainer.initial_train(self.replay_buffer)
+        self.trainer.initial_train(self.replay_buffer)
         print('Creating Policy')
 
-        self.policy = CEMSafeSetPolicy(self.train_env, self.encoder, self.safe_set, self.value_func, self.dynamics_model,
-                                  self.constraint_function, self.goal_indicator, cfg)
+        self.policy = CEMSafeSetPolicy(self.train_env, self.encoder, self.safe_set, self.value_func, 
+                                       self.dynamics_model, self.constraint_function, self.goal_indicator, cfg)
         
         self.horizon = cfg.horizon
 
@@ -122,8 +122,8 @@ class Workspace:
 
                     constr = info['constraint']
                     transition = {'obs': obs, 'action': action, 'reward': reward,
-                                'next_obs': next_obs, 'done': done, 
-                                'constraint': constr, 'safe_set': 0, 'on_policy': 1}
+                                  'next_obs': next_obs, 'done': done, 
+                                  'constraint': constr, 'safe_set': 0, 'on_policy': 1}
                     transitions.append(transition)
                     obs = next_obs
                     constr_viol = constr_viol or info.constraint
