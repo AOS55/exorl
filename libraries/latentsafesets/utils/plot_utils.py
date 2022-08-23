@@ -1,4 +1,5 @@
 from ..utils import pytorch_utils as ptu
+from libraries.safe import SimplePointBot
 
 from sys import platform
 if platform == 'darwin':
