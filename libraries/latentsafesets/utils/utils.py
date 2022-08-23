@@ -135,9 +135,9 @@ def transform_dict(trajectories):
                     new_dict[key] = trajectory[key][idx]
             new_dict['next_obs'] = trajectory['observation'][idx]
             if 1 in trajectory['reward']:
-                new_dict['ss'] = 1
+                new_dict['safe_set'] = 1
             else:
-                new_dict['ss'] = 0
+                new_dict['safe_set'] = 0
             new_dict['on_policy'] = 0
             new_trajectory.append(new_dict)
         new_trajectories.append(new_trajectory)
