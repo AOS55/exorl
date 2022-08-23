@@ -71,10 +71,11 @@ class EncodedReplayBuffer:
         Samples only from the entries where the array corresponding to key is nonzero
         I added this method so I could sample only from data entries in the safe set
         """
-        print(f'self.data[key]: {self.data[key]}')
         assert len(self.data[key].shape) == 1, 'cannot sample positive from array with >1d values'
         nonzeros = self.data[key].nonzero()[0]
-        # print(nonzeros)
+        print(f'nonzeros are: {nonzeros}')
+        print(f'length of nonzeros: {len(nonzeros)}')
+        print(f'key: {key}')
         if ensemble == 0:
             indices = np.random.randint(len(nonzeros), size=batch_size)
         elif ensemble > 0:
@@ -123,11 +124,11 @@ class EncodedReplayBuffer:
             idxs = np.arange(idx, idx + length) % self.size
             # Make sure data does not cross the memory index
             valid_idx = self._index not in idxs[1:]
-            for key, _ in self.data.items() :
-                print(f'dict key is: {key}')
+            # for key, _ in self.data.items() :
+            #     print(f'dict key is: {key}')
             if 'done' in self.data:
                 end = np.any(self.data['done'][idxs[:-1]])
-                print(f'end is: {end}')
+                # print(f'end is: {end}')
                 valid_idx = valid_idx and not end
         print(f'idxs are: {idxs}')
         return idxs
