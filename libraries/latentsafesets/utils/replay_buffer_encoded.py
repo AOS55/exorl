@@ -24,7 +24,6 @@ class EncodedReplayBuffer:
         Stores transitions
         :param transitions: a list of dictionaries encoding transitions. Keys can be anything
         """
-        print(f'transitions are: {transitions.keys()}')
         assert transitions[-1]['done'] > 0, "Last transition must be end of trajectory"
         for transition in transitions:
             self.store_transition(transition)
@@ -72,6 +71,7 @@ class EncodedReplayBuffer:
         Samples only from the entries where the array corresponding to key is nonzero
         I added this method so I could sample only from data entries in the safe set
         """
+        print(f'self.data[key]: {self.data[key]}')
         assert len(self.data[key].shape) == 1, 'cannot sample positive from array with >1d values'
         nonzeros = self.data[key].nonzero()[0]
         # print(nonzeros)
@@ -116,7 +116,8 @@ class EncodedReplayBuffer:
     def _sample_idx(self, length):
         valid_idx = False
         idxs = None
-        print(f'length is: {length}')
+        print(f'length is: {length}, len(self) is: {len(self)}')
+        print(f'data is: {type(self.data)}')
         while not valid_idx:
             idx = np.random.randint(0, len(self) - length)
             idxs = np.arange(idx, idx + length) % self.size
