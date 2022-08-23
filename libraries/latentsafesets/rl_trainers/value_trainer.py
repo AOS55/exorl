@@ -25,6 +25,10 @@ class ValueTrainer(Trainer):
             self.plot(os.path.join(update_dir, "val_start.pdf"), replay_buffer)
             return
 
+        if len(replay_buffer.data['on_policy'].nonzero()[0]) == 0:
+            # If no on_policy data available skip init train
+            return
+
         log.info('Beginning value initial optimization')
 
         for i in range(2 * self.params['val_init_iters']):
