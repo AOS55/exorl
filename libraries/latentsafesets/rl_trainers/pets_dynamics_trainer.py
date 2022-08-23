@@ -68,8 +68,6 @@ class PETSDynamicsTrainer(Trainer):
     def visualize(self, file, replay_buffer):
         print('started visualize function')
         out_dict = replay_buffer.sample_chunk(8, 10)
-        print(f'out_dict is: {out_dict}')
         obs = out_dict['obs']
         act = out_dict['action']
-        print(f'obs is: {obs}, act is: {act}')
         pu.visualize_dynamics(obs, act, self.dynamics, self.dynamics.encoder, file)
