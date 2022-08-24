@@ -77,4 +77,4 @@ class SafeSetTrainer(Trainer):
     def plot(self, file, replay_buffer):
         out_dict = replay_buffer.sample(self.params['safe_set_batch_size'])
         obs = out_dict['obs']
-        # pu.visualize_safe_set(obs, self.safe_set, file, env=self.env)
+        pu.visualize_safe_set(obs, self.safe_set, file, env=self.env)

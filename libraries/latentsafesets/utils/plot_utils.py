@@ -1,5 +1,9 @@
 from ..utils import pytorch_utils as ptu
+from ..utils import spb_utils as spbu
+from ..utils import bottleneck_utils as bnnu
 from libraries.safe import SimplePointBot
+from libraries.safe import SimpleVelocityBot
+from libraries.safe import BottleNeck
 
 from sys import platform
 if platform == 'darwin':
@@ -277,4 +281,3 @@ def visualize_plan(obs, act_seq, dynamics, file):
             pred = pred[0]
         ims.append(pred)
     make_movie(ims, file)
-

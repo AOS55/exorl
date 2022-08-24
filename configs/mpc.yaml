@@ -40,6 +40,7 @@ safe_set_thresh_mult: 0.8
 safe_set_thresh_mult_iters: 5
 safe_set_type: bellman  # bellman or bc
 safe_set_batch_size: 256
+safe_set_update_iters: 512
 safe_set_bellman_coef: 0.9
 safe_set_bellman_reduction: max  # add or max
 safe_set_n_models: 5
@@ -75,18 +76,20 @@ dyn_n_models: 5
 dyn_size: 128
 dyn_n_layers: 3
 dyn_lr: 1e-3
-constr_init_iters: 10000
-constr_thresh: 0.2
-constr_ignore: True
 # Goal Indicator
 gi_checkpoint: False
 gi_batch_size: 256
+gi_update_iters: 512
 gi_thresh: 0.5
 gi_n_hidden: 3
 gi_hidden_size: 200
 gi_lr: 1e-4
 gi_init_iters: 10000
 # Constraint Estimator
+constr_init_iters: 10000
+constr_thresh: 0.2
+constr_ignore: True
+constr_update_iters: 512
 constr_checkpoint: False
 constr_batch_size: 256
 constr_n_hidden: 3

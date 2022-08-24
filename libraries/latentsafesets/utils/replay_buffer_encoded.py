@@ -73,9 +73,6 @@ class EncodedReplayBuffer:
         """
         assert len(self.data[key].shape) == 1, 'cannot sample positive from array with >1d values'
         nonzeros = self.data[key].nonzero()[0]
-        print(f'nonzeros are: {nonzeros}')
-        print(f'length of nonzeros: {len(nonzeros)}')
-        print(f'key: {key}')
         if ensemble == 0:
             indices = np.random.randint(len(nonzeros), size=batch_size)
         elif ensemble > 0:
@@ -128,7 +125,7 @@ class EncodedReplayBuffer:
                 end = np.any(self.data['done'][idxs[:-1]])
                 # print(f'end is: {end}')
                 valid_idx = valid_idx and not end
-        print(f'idxs are: {idxs}')
+        # print(f'idxs are: {idxs}')
         return idxs
 
     def __len__(self):

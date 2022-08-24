@@ -60,6 +60,6 @@ class ConstraintTrainer(Trainer):
     def plot(self, file, replay_buffer):
         out_dict = replay_buffer.sample(self.params['constr_batch_size'])
         next_obs = out_dict['next_obs']
-        # pu.visualize_onezero(next_obs, self.constr,
-        #                      file,
-        #                      env=self.env)
+        pu.visualize_onezero(next_obs, self.constr,
+                             file,
+                             env=self.env)
