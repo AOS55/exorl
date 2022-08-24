@@ -81,6 +81,7 @@ class Workspace:
                                        self.dynamics_model, self.constraint_function, self.goal_indicator, cfg)
         
         self.horizon = cfg.horizon
+        self.discount = cfg.discount
 
         self.num_updates = cfg.num_updates
         self.traj_per_update = cfg.traj_per_update
@@ -123,10 +124,10 @@ class Workspace:
                     constr = info['constraint']
                     transition = {'obs': obs, 'action': action, 'reward': reward,
                                   'next_obs': next_obs, 'done': done, 
-                                  'constraint': constr, 'safe_set': 0, 'on_policy': 1}
+                                  'constraint': constr, 'safe_set': 0, 'on_policy': 1, 'discount': self.discount}
                     transitions.append(transition)
                     obs = next_obs
-                    constr_viol = constr_viol or info.constraint
+                    constr_viol = constr_viol or info['constraint']
                     succ = succ or reward == 0
                     if done: 
                         break
@@ -160,9 +161,9 @@ class Workspace:
                 log('Epoch', idx)
                 log('TrainEpisodes', n_episodes)
                 log('TestEpisodes', self.traj_per_update)
-                log('EpRet')
-                log('EpLen', average_only=True)
-                log('EpConstr', average_only=True)
+                log('EpRet', traj_reward)
+                log('EpLen', idz+1)
+                log('EpConstr', float(constr_viol))
                 log('ConstrRate', np.mean(constr_viols))
                 log('SuccRate', np.mean(task_succ))
             n_episodes += self.traj_per_update
@@ -175,8 +176,8 @@ class Workspace:
             # self.log.info('Iteration %d average reward: %.4f' % (idx, mean_rew))
             
             pu.simple_plot(avg_rewards, std=std_rewards, title='Average Rewards',
-                        file=os.path.join(self.logdir, 'rewards.pdf'),
-                        ylabel='Average Reward', xlabel='# Training updates')
+                           file=os.path.join(self.logdir, 'rewards.pdf'),
+                           ylabel='Average Reward', xlabel='# Training updates')
 
             # Update models
             self.trainer.update(self.replay_buffer, idx)
