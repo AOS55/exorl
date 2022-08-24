@@ -5,7 +5,7 @@ defaults:
 task: SimplePointBot_goal
 env: SimplePointBot
 obs_type: pixels # [states, pixels]
-frame_stack: 3
+frame_stack: 1
 action_repeat: 1
 discount: 0.99
 log_freq: 100

@@ -5,7 +5,7 @@ defaults:
 
 env: SimplePointBot
 obs_type: pixels # [states, pixels]
-frame_stack: 3
+frame_stack: 1
 action_repeat: 1
 data_counts: 100
 data_dirs: datasets/pixels/SimplePointBot/diayn/buffer
