@@ -26,7 +26,6 @@ class GoalIndicatorTrainer(Trainer):
 
         for i in range(self.cfg.gi_init_iters):
             out_dict = replay_buffer.sample(self.cfg.gi_batch_size)
-            print(f"reward: {out_dict['reward'].shape}, next_obs: {out_dict['next_obs'].shape}")
             next_obs, rew = out_dict['next_obs'], out_dict['reward']
 
             loss, info = self.gi.update(next_obs, rew, already_embedded=True)
