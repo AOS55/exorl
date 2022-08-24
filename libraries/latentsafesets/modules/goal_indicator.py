@@ -67,8 +67,6 @@ class GoalIndicator(nn.Module, EncodedModule):
         # Assuming that rew = {-1: not in goal, 0: in goal}
         logits = self(next_obs, already_embedded).squeeze()
         targets = torch.logical_not(rew).float()
-        print(f'logits: {logits}')
-        print(f'targets: {targets}')
         loss = self.loss_func(logits, targets)
         return loss
 
