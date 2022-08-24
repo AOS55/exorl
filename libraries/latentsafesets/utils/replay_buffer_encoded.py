@@ -117,8 +117,6 @@ class EncodedReplayBuffer:
     def _sample_idx(self, length):
         valid_idx = False
         idxs = None
-        print(f'length is: {length}, len(self) is: {len(self)}')
-        print(f'data is: {type(self.data)}')
         while not valid_idx:
             idx = np.random.randint(0, len(self) - length)
             idxs = np.arange(idx, idx + length) % self.size
