@@ -74,7 +74,7 @@ class Obstacle(composer.Arena):
             name='obstacle',
             type='box',
             pos=(0., 0., 0.),
-            size=(1.0, 1.0, 2.0),
+            size=(1.0, 2.0, 2.0),
             rgba=(1.0, 0.0, 0.0, 1.0)
         )
 
