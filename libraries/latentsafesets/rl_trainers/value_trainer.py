@@ -22,7 +22,7 @@ class ValueTrainer(Trainer):
 
     def initial_train(self, replay_buffer, update_dir):
         if self.value.trained:
-            self.plot(os.path.join(update_dir, "val_start.pdf"), replay_buffer)
+            # self.plot(os.path.join(update_dir, "val_start.pdf"), replay_buffer)
             return
 
         if len(replay_buffer.data['on_policy'].nonzero()[0]) == 0:
@@ -68,8 +68,8 @@ class ValueTrainer(Trainer):
             self.loss_plotter.add_data(info)
 
         log.info('Creating value function heatmap')
-        self.loss_plotter.plot()
-        self.plot(os.path.join(update_dir, "val.pdf"), replay_buffer)
+        # self.loss_plotter.plot()
+        # self.plot(os.path.join(update_dir, "val.pdf"), replay_buffer)
         self.value.save(os.path.join(update_dir, 'val.pth'))
 
     def plot(self, file, replay_buffer):

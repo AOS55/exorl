@@ -38,10 +38,10 @@ class PETSDynamicsTrainer(Trainer):
                 self.loss_plotter.print(i)
             if i % self.cfg.plot_freq == 0:
                 log.info('Creating dynamics visualization')
-                self.loss_plotter.plot()
+                # self.loss_plotter.plot()
 
                 print(f'started visualize')
-                self.visualize(os.path.join(update_dir, "dyn%d.gif" % i), replay_buffer)
+                # self.visualize(os.path.join(update_dir, "dyn%d.gif" % i), replay_buffer)
                 print(f'end visualize')
 
             if i % self.cfg.checkpoint_freq == 0 and i > 0:
@@ -61,8 +61,8 @@ class PETSDynamicsTrainer(Trainer):
             self.loss_plotter.add_data(info)
 
         log.info('Creating dynamics heatmap')
-        self.loss_plotter.plot()
-        self.visualize(os.path.join(update_dir, "dyn.gif"), replay_buffer)
+        # self.loss_plotter.plot()
+        # self.visualize(os.path.join(update_dir, "dyn.gif"), replay_buffer)
         self.dynamics.save(os.path.join(update_dir, 'dyn.pth'))
 
     def visualize(self, file, replay_buffer):
