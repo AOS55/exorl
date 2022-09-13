@@ -41,7 +41,7 @@ class GoalIndicatorTrainer(Trainer):
             if i % self.cfg.checkpoint_freq == 0 and i > 0:
                 self.gi.save(os.path.join(update_dir, 'gi_%d.pth' % i))
 
-        spbu.evaluate_constraint_func(self.gi, file=os.path.join(update_dir, "gi_init.pdf"))
+        # spbu.evaluate_constraint_func(self.gi, file=os.path.join(update_dir, "gi_init.pdf"))
         self.gi.save(os.path.join(update_dir, 'gi.pth'))
 
     def update(self, replay_buffer, update_dir):
