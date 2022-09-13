@@ -39,6 +39,7 @@ class VAEEncoder(nn.Module):
     def __init__(self, d_obs, d_latent=32, image_channels=3, h_dim=256):
         super(VAEEncoder, self).__init__()
         self.d_obs = d_obs
+        print(f'self.d_obs: {self.d_obs}')
         self.d_in = d_obs if len(d_obs) == 3 else (d_obs[0] * d_obs[1], d_obs[2], d_obs[3])
         self.out_dim = d_latent
         in_channels = image_channels if len(d_obs) == 3 else image_channels * d_obs[0]
@@ -53,7 +54,6 @@ class VAEEncoder(nn.Module):
             nn.ReLU(),
             nn.Flatten()
         )
-
         self.fc1 = nn.Linear(h_dim, d_latent)
         self.fc2 = nn.Linear(h_dim, d_latent)
 

@@ -10,7 +10,7 @@ class ValueEnsemble(nn.Module, EncodedModule):
 
     def __init__(self, encoder, cfg):
         """
-        Initializes a value function Function
+        Initializes a value function
         """
         super(ValueEnsemble, self).__init__()
         EncodedModule.__init__(self, encoder)

@@ -59,7 +59,7 @@ class VAETrainer(Trainer):
             sample = torch.randn(64, self.d_latent).to(ptu.TORCH_DEVICE)
             sample = self.vae.decode(sample).cpu()
             if self.frame_stack > 1:
-                # Sample n index randomely
+                # Sample n index randomly
                 arange = torch.arange(64)
                 ind = arange // 22
                 sample = sample[arange, ind]

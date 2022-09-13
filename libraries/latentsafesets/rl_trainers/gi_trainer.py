@@ -20,7 +20,7 @@ class GoalIndicatorTrainer(Trainer):
 
     def initial_train(self, replay_buffer, update_dir):
         if self.gi.trained:
-            # self.plot(os.path.join(update_dir, "gi_start.pdf"), replay_buffer)
+            self.plot(os.path.join(update_dir, "gi_start.pdf"), replay_buffer)
             return
 
         log.info('Beginning goal indicator initial optimization')
@@ -36,12 +36,12 @@ class GoalIndicatorTrainer(Trainer):
                 self.loss_plotter.print(i)
             if i % self.cfg.plot_freq == 0:
                 log.info('Creating goal indicator function heatmap')
-                # self.loss_plotter.plot()
-                # self.plot(os.path.join(update_dir, "gi%d.pdf" % i), replay_buffer)
+                self.loss_plotter.plot()
+                self.plot(os.path.join(update_dir, "gi%d.pdf" % i), replay_buffer)
             if i % self.cfg.checkpoint_freq == 0 and i > 0:
                 self.gi.save(os.path.join(update_dir, 'gi_%d.pth' % i))
 
-        # spbu.evaluate_constraint_func(self.gi, file=os.path.join(update_dir, "gi_init.pdf"))
+        spbu.evaluate_constraint_func(self.gi, file=os.path.join(update_dir, "gi_init.pdf"))
         self.gi.save(os.path.join(update_dir, 'gi.pth'))
 
     def update(self, replay_buffer, update_dir):
@@ -56,7 +56,7 @@ class GoalIndicatorTrainer(Trainer):
 
         log.info("Creating goal indicator function heatmap")
         self.loss_plotter.plot()
-        # self.plot(os.path.join(update_dir, "gi.pdf"), replay_buffer)
+        self.plot(os.path.join(update_dir, "gi.pdf"), replay_buffer)
         self.gi.save(os.path.join(update_dir, "gi.pth"))
 
     def plot(self, file, replay_buffer):

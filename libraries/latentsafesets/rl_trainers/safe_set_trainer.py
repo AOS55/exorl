@@ -36,9 +36,7 @@ class SafeSetTrainer(Trainer):
             if i % self.params['plot_freq'] == 0:
                 log.info('Creating safe set heatmap')
                 self.loss_plotter.plot()
-                # print(f'replay_buffer: {replay_buffer}')
-                # print(f'type(replay_buffer): {type(replay_buffer)}')
-                # self.plot(os.path.join(update_dir, "ss%d.pdf" % i), replay_buffer)
+                self.plot(os.path.join(update_dir, "ss%d.pdf" % i), replay_buffer)
             if i % self.params['checkpoint_freq'] == 0 and i > 0:
                 self.safe_set.save(os.path.join(update_dir, 'safe_set_%d.pth' % i))
 
@@ -53,7 +51,7 @@ class SafeSetTrainer(Trainer):
         log.info('Creating safe set heatmap')
         self.loss_plotter.plot()
         self.safe_set.save(os.path.join(update_dir, 'ss.pth'))
-        # self.plot(os.path.join(update_dir, "ss.pdf"), replay_buffer)
+        self.plot(os.path.join(update_dir, "ss.pdf"), replay_buffer)
 
         # return heatmap
 

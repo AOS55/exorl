@@ -19,7 +19,7 @@ class ConstraintTrainer(Trainer):
 
     def initial_train(self, replay_buffer, update_dir):
         if self.constr.trained:
-            # self.plot(os.path.join(update_dir, "constr_start.pdf"), replay_buffer)
+            self.plot(os.path.join(update_dir, "constr_start.pdf"), replay_buffer)
             return
 
         log.info('Beginning constraint initial optimization')
@@ -36,7 +36,7 @@ class ConstraintTrainer(Trainer):
             if i % self.params['plot_freq'] == 0:
                 log.info('Creating constraint function heatmap')
                 self.loss_plotter.plot()
-                # self.plot(os.path.join(update_dir, "constr%d.pdf" % i), replay_buffer)
+                self.plot(os.path.join(update_dir, "constr%d.pdf" % i), replay_buffer)
             if i % self.params['checkpoint_freq'] == 0 and i > 0:
                 self.constr.save(os.path.join(update_dir, 'constr_%d.pth' % i))
 
@@ -54,7 +54,7 @@ class ConstraintTrainer(Trainer):
 
         log.info('Creating constraint function heatmap')
         self.loss_plotter.plot()
-        # self.plot(os.path.join(update_dir, "constr.pdf"), replay_buffer)
+        self.plot(os.path.join(update_dir, "constr.pdf"), replay_buffer)
         self.constr.save(os.path.join(update_dir, 'constr.pth'))
 
     def plot(self, file, replay_buffer):
