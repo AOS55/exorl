@@ -87,13 +87,14 @@ def evaluate_constraint_func(constraint,
     return data
 
 def _centroids(file):
-    ep = np.load(os.path.join('data/datasets/pixels/SimplePointBot/diayn/buffer', file))
+    ep = np.load(os.path.join('data/datasets/states/SimplePointBot/diayn200_500000/buffer', file))
     frames = ep['observation']
     centroids = [_get_red_centroid(frame) for frame in frames]
+    centroids = frames
     return centroids
 
 def multi_track():
-    files = os.listdir('data/datasets/pixels/SimplePointBot/diayn/buffer')
+    files = os.listdir('data/datasets/states/SimplePointBot/diayn200_500000/buffer')
     print(f'files: {len(files)}')
     tracks = []
     idx = 0
