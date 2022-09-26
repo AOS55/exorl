@@ -66,7 +66,12 @@ class Workspace:
         if cfg.data_type == 'unsupervised':
             constraint_spec = specs.Array((1,), bool, 'constraint')
             done_spec = specs.Array((1,), bool, 'done')
-            meta_specs = (meta_specs[0], constraint_spec, done_spec)
+            if cfg.agent.name in ['aps', 'diayn', 'smm']:
+                meta_specs = (meta_specs[0], constraint_spec, done_spec)
+                self.meta_encoded = True
+            else:
+                meta_specs = (constraint_spec, done_spec)
+                self.meta_encoded = False
 
         # create replay buffer
         data_specs = (self.train_env.observation_spec(),
@@ -138,20 +143,27 @@ class Workspace:
                 if self.cfg.data_type == 'unsupervised':
                     # TODO: Provide a less hacky way of accessing info from environment
                     info = self.sample_env._env._env._env._env.get_info()
-                    unsupervised_data = {'meta': meta, 'constraint': info['constraint'], 'done': info['done']}
-                    self.replay_storage.add(time_step, unsupervised_data) 
+                    if self.meta_encoded:
+                        unsupervised_data = {'meta': meta, 'constraint': info['constraint'], 'done': info['done']}
+                    else:
+                        unsupervised_data = {'constraint': info['constraint'], 'done': info['done']}
+                    self.replay_storage.add(time_step, unsupervised_data)
                 else:
                     self.replay_storage.add(time_step, meta)
 
             episode += 1
-            skill_index = str(meta['skill'])
-            self.video_recorder.save(f'{episode}_{skill_index}.mp4')
+            # skill_index = str(meta['skill'])
+            self.video_recorder.save(f'{episode}.mp4')
 
         with self.logger.log_and_dump_ctx(self.global_frame, ty='eval') as log:
             log('episode_reward', total_reward / episode)
             log('episode_length', step * self.cfg.action_repeat / episode)
             log('episode', self.global_episode)
             log('step', self.global_step)
+
+        # Store data in values
+        buffer_path = os.path.join(self.work_dir, 'buffer')
+        os.rename(buffer_path, f'{self.cfg.agent.name}_{self.cfg.snapshot_ts}')
     
     def load_snapshot(self):
         snapshot_base_dir = Path(self.cfg.snapshot_base_dir)
@@ -159,8 +171,7 @@ class Workspace:
         snapshot_dir = snapshot_base_dir / self.cfg.obs_type / domain / self.cfg.agent.name
 
         def try_load(seed):
-            snapshot = snapshot_dir / str(
-                seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
+            snapshot = snapshot_dir / f'{self.cfg.skill_dim}' / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
             import os
             print(f'current dir is: {os.getcwd()}')
             print(f'snapshot file location is: {snapshot}')
