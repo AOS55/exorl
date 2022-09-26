@@ -61,6 +61,7 @@ class DIAYNAgent(DDPGAgent):
         if self.skill_type == 'uniform':
             skill = np.random.uniform(0, 1, self.skill_dim)
             skill = skill.astype(dtype=np.float32)
+            print(f'skill: {skill}')
         else:
             skill = np.zeros(self.skill_dim, dtype=np.float32)
             skill[np.random.choice(self.skill_dim)] = 1.0
