@@ -62,6 +62,7 @@ We provide the following workflows:
   ```
 
 ### Safe Reinforcement Learning
+
   **Pre-training**, learn from agents intrinsic reward on a specific domain
   ```sh
   python pretrain.py agent=UNSUPERVISED_AGENT domain=DOMAIN
@@ -82,6 +83,8 @@ We provide the following workflows:
   ```sh
   python train_mpc.py --env=DOMAIN
   ```
+
+  [Further details found here](docs/safe_learning.md)
 
 ****
 
