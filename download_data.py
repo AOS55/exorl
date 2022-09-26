@@ -9,7 +9,6 @@ import torch
 
 
 def download_data_from_s3(obs_type='states', env='SimplePointBot', agent='diayn', priors=10, pretrain_steps=50000, root_dir='data/datasets'):
-
     if agent=='diayn':
         elems = [obs_type, env, agent, str(priors), str(pretrain_steps)]
         dir_path = os.path.join(*elems)
@@ -42,6 +41,30 @@ def download_data_from_s3(obs_type='states', env='SimplePointBot', agent='diayn'
             np.savez(os.path.join(root_dir, key), dict(data))
     return None
 
+def download_all_data_from_s3(root_dir='data/datasets'):
+    bucket_name = 'urlsuite-data'
+    region_name = 'eu-west-2'
+    resource_type = 's3'
+    s3 = boto3.client(resource_type, region_name=region_name, config=Config(signature_version=UNSIGNED))
+    # TODO: Need to expand the query size or query branch and move along tree
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix='')
+    files = response.get("Contents")
+    http = urllib3.PoolManager()
+    try:
+        os.mkdir(root_dir)
+    except FileExistsError:
+        print(f'Need to remove the {root_dir} as download all only works for the s3 root')
+    for file in files:
+            key = file['Key']
+            url = f'https://{bucket_name}.{resource_type}.{region_name}.amazonaws.com/{key}'
+            dir_elems = key.split('/')[:-1]
+            dir_path = os.path.join(*dir_elems)
+            dir_path = os.path.join(root_dir, dir_path)
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+            r = http.request('GET', url)
+            data = np.load(BytesIO(r.data))
+            np.savez(os.path.join(root_dir, key), dict(data))
 
 def download_model_from_s3(obs_type='states', env='SimplePointBot', agent='diayn', priors=20, seed=1, root_dir='data/models'):
 
@@ -85,10 +108,13 @@ def download_all_models_from_s3(root_dir='data/models'):
     for file in files:
             key = file['Key']
             url = f'https://{bucket_name}.{resource_type}.{region_name}.amazonaws.com/{key}'
+            dir_path = key.split('/')[:-1]
+            if not os.path.exists(dir_path):
+                os.mkdir(dir_path)
             r = http.request('GET', url)
             model = torch.load(BytesIO(r.data))
             torch.save(model, os.path.join(root_dir, key))
 
 
 if __name__=='__main__':
-    download_model_from_s3()
+    download_all_data_from_s3()
