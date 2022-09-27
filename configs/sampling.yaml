@@ -18,7 +18,7 @@ num_seed_frames: 4000
 eval_every_frames: 10000
 num_eval_episodes: 10
 # sample settings
-num_sample_episodes: 10000
+num_sample_episodes: 1000
 data_type: unsupervised  # either offline_rl or unsupervised changes the data collected from the environment
 # pretrained
 snapshot_ts: 500000
