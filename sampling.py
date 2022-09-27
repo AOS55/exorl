@@ -61,12 +61,14 @@ class Workspace:
             pretrained_agent = self.load_snapshot()['agent']
             self.agent.init_from(pretrained_agent)
 
+        self.prior_encoded_agents = ['aps', 'diayn', 'smm']
+
         # get meta specs
         meta_specs = self.agent.get_meta_specs()
         if cfg.data_type == 'unsupervised':
             constraint_spec = specs.Array((1,), bool, 'constraint')
             done_spec = specs.Array((1,), bool, 'done')
-            if cfg.agent.name in ['aps', 'diayn', 'smm']:
+            if cfg.agent.name in self.prior_encoded_agents:
                 meta_specs = (meta_specs[0], constraint_spec, done_spec)
                 self.meta_encoded = True
             else:
@@ -121,10 +123,14 @@ class Workspace:
         sample_until_step =  utils.Until(self.cfg.num_sample_episodes)
         step, episode, total_reward = 0, 0, 0
         meta = self.agent.init_meta()
-
         while sample_until_step(episode):
-            meta = self.agent.init_meta()
             time_step = self.sample_env.reset()
+            if self.cfg.agent.name not in self.prior_encoded_agents:
+                # Update agent if not in the reward      
+                meta = self.agent.update_meta(meta, self.global_step, time_step)
+                self.sample_env._env._env._env._env.environment.reset(random_start=False)
+            else:
+                meta = self.agent.init_meta()
             self.replay_storage.add(time_step, meta)
             self.video_recorder.init(self.sample_env, enabled=True)
             trajectory = []
@@ -171,7 +177,10 @@ class Workspace:
         snapshot_dir = snapshot_base_dir / self.cfg.obs_type / domain / self.cfg.agent.name
 
         def try_load(seed):
-            snapshot = snapshot_dir / f'{self.cfg.skill_dim}' / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
+            if self.cfg.agent == 'diayn':
+                snapshot = snapshot_dir / f'{self.cfg.skill_dim}' / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
+            else:
+                snapshot = snapshot_dir / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
             import os
             print(f'current dir is: {os.getcwd()}')
             print(f'snapshot file location is: {snapshot}')
