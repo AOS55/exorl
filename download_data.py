@@ -67,7 +67,6 @@ def download_all_data_from_s3(root_dir='data/datasets'):
             np.savez(os.path.join(root_dir, key), dict(data))
 
 def download_model_from_s3(obs_type='states', env='SimplePointBot', agent='diayn', priors=20, seed=1, root_dir='data/models'):
-
     if agent=='diayn':
         elems = [obs_type, env, agent, str(priors), str(seed)]
         dir_path = os.path.join(*elems)

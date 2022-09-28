@@ -61,12 +61,14 @@ class Workspace:
             pretrained_agent = self.load_snapshot()['agent']
             self.agent.init_from(pretrained_agent)
 
+        self.prior_encoded_agents = ['aps', 'diayn', 'smm']
+
         # get meta specs
         meta_specs = self.agent.get_meta_specs()
         if cfg.data_type == 'unsupervised':
             constraint_spec = specs.Array((1,), bool, 'constraint')
             done_spec = specs.Array((1,), bool, 'done')
-            if cfg.agent.name in ['aps', 'diayn', 'smm']:
+            if cfg.agent.name in self.prior_encoded_agents:
                 meta_specs = (meta_specs[0], constraint_spec, done_spec)
                 self.meta_encoded = True
             else:
@@ -87,7 +89,11 @@ class Workspace:
                                                 cfg.replay_buffer_size,
                                                 cfg.batch_size,
                                                 cfg.replay_buffer_num_workers,
-                                                False, cfg.nstep, cfg.discount)
+                                                True, cfg.nstep, cfg.discount)
+
+        meta_specs = self.agent.get_meta_specs()
+
+        self._replay_iter = None
 
         # create video recorders
         self.video_recorder = VideoRecorder(
@@ -118,42 +124,61 @@ class Workspace:
         return self._replay_iter
     
     def sample(self):
-        sample_until_step =  utils.Until(self.cfg.num_sample_episodes)
+        seed_until_step = utils.Until(self.cfg.num_seed_frames,
+                                      self.cfg.action_repeat)
+        train_until_step = utils.Until(self.cfg.num_train_frames,
+                                       self.cfg.action_repeat)
+        sample_until_step = utils.Until(self.cfg.num_sample_episodes)
         step, episode, total_reward = 0, 0, 0
+        time_step = self.sample_env.reset()
         meta = self.agent.init_meta()
 
-        while sample_until_step(episode):
-            meta = self.agent.init_meta()
-            time_step = self.sample_env.reset()
-            self.replay_storage.add(time_step, meta)
-            self.video_recorder.init(self.sample_env, enabled=True)
-            trajectory = []
-            while not time_step.last():
-                with torch.no_grad(), utils.eval_mode(self.agent):
-                    action = self.agent.act(time_step.observation,
-                                            meta,
-                                            self.global_step,
-                                            eval_mode=True)
-                time_step = self.sample_env.step(action)
-                self.video_recorder.record(self.sample_env)
-                total_reward += time_step.reward
-                trajectory.append(time_step)
-                step += 1
-                
-                if self.cfg.data_type == 'unsupervised':
-                    # TODO: Provide a less hacky way of accessing info from environment
-                    info = self.sample_env._env._env._env._env.get_info()
-                    if self.meta_encoded:
-                        unsupervised_data = {'meta': meta, 'constraint': info['constraint'], 'done': info['done']}
-                    else:
-                        unsupervised_data = {'constraint': info['constraint'], 'done': info['done']}
-                    self.replay_storage.add(time_step, unsupervised_data)
+        self.replay_storage.add(time_step, meta)
+        while train_until_step(self.global_step):
+            while sample_until_step(episode):
+                time_step = self.sample_env.reset()
+                if self.cfg.agent.name not in self.prior_encoded_agents:
+                    # Update agent if not in the reward      
+                    meta = self.agent.update_meta(meta, self.global_step, time_step)
+                    self.sample_env._env._env._env._env.environment.reset(random_start=False)
                 else:
-                    self.replay_storage.add(time_step, meta)
+                    meta = self.agent.init_meta()
+                self.replay_storage.add(time_step, meta)
+                self.video_recorder.init(self.sample_env, enabled=True)
+                trajectory = []
+                while not time_step.last():
+                    with torch.no_grad(), utils.eval_mode(self.agent):
+                        action = self.agent.act(time_step.observation,
+                                                meta,
+                                                self.global_step,
+                                                eval_mode=True)
+                    time_step = self.sample_env.step(action)
+                    self.video_recorder.record(self.sample_env)
+                    total_reward += time_step.reward
+                    trajectory.append(time_step)
+                    step += 1
+                    self._global_step += 1
+                    
+                    if self.cfg.data_type == 'unsupervised':
+                        # TODO: Provide a less hacky way of accessing info from environment
+                        info = self.sample_env._env._env._env._env.get_info()
+                        if self.meta_encoded:
+                            unsupervised_data = {'meta': meta, 'constraint': info['constraint'], 'done': info['done']}
+                        else:
+                            unsupervised_data = {'constraint': info['constraint'], 'done': info['done']}
+                        self.replay_storage.add(time_step, unsupervised_data)
+                    else:
+                        self.replay_storage.add(time_step, meta)
 
-            episode += 1
-            # skill_index = str(meta['skill'])
-            self.video_recorder.save(f'{episode}.mp4')
+                episode += 1
+                # skill_index = str(meta['skill'])
+                if not seed_until_step(self.global_step):
+                    if self.cfg.agent.name not in self.prior_encoded_agents:
+                        batch = next(self.replay_iter)
+                        algo_batch = batch[0:5]
+                        algo_iter = iter([algo_batch])
+                        self.agent.update(algo_iter, self.global_step)
+                self.video_recorder.save(f'{episode}.mp4')
 
         with self.logger.log_and_dump_ctx(self.global_frame, ty='eval') as log:
             log('episode_reward', total_reward / episode)
@@ -171,8 +196,10 @@ class Workspace:
         snapshot_dir = snapshot_base_dir / self.cfg.obs_type / domain / self.cfg.agent.name
 
         def try_load(seed):
-            snapshot = snapshot_dir / f'{self.cfg.skill_dim}' / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
-            import os
+            if self.cfg.agent == 'diayn':
+                snapshot = snapshot_dir / f'{self.cfg.skill_dim}' / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
+            else:
+                snapshot = snapshot_dir / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
             print(f'current dir is: {os.getcwd()}')
             print(f'snapshot file location is: {snapshot}')
             print(f'snapshot exists: {snapshot.exists()}')
