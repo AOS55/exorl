@@ -28,7 +28,7 @@ def load_episode(fn):
         episode = {k: episode[k] for k in episode.keys()}
         return episode
 
-def relable_episode(env, episode):
+def relabel_episode(env, episode):
     rewards = []
     reward_spec = env.reward_spec()
     states = episode['physics']
@@ -81,8 +81,8 @@ class OfflineReplayBuffer(IterableDataset):
         eps_fn = random.choice(self._episode_fns)
         return self._episodes[eps_fn]
 
-    def _relable_reward(self, episode):
-        return relable_episode(self._env, episode)
+    def _relabel_reward(self, episode):
+        return relabel_episode(self._env, episode)
 
     def _sample(self):
         episode = self._sample_episode()

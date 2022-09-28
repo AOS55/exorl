@@ -11,6 +11,7 @@ from dm_env import StepType, specs
 import libraries.dmc as cdmc
 from libraries.safe import SimplePointBot as SPB
 from .wrappers import GymWrapper
+from .wrappers import FrameStack
 
 ENV_TYPES = {
     'walker': 'dmc',
@@ -321,10 +322,13 @@ def _make_gym(obs_type, domain, task, frame_stack, action_repeat, seed):
 def _make_custom(obs_type, domain, task, frame_stack, action_repeat, seed):
     if obs_type == 'states':
         from_pixels = False
+        env = SPB(from_pixels=from_pixels)
+        env = GymWrapper(env)
     else:
         from_pixels = True
-    env = SPB(from_pixels=from_pixels)
-    env = GymWrapper(env)
+        env = SPB(from_pixels=from_pixels)
+        env = FrameStack(env, num_stack=frame_stack)
+        env = GymWrapper(env)
     env = ActionDTypeWrapper(env, np.float32)
     env = ActionRepeatWrapper(env, action_repeat)
     return env
@@ -367,7 +371,7 @@ def make(name, obs_type, frame_stack, action_repeat, seed):
     assert domain in ENV_TYPES, f'task domain: {domain} is not recognized'
     env_type = ENV_TYPES[domain]
     if env_type == 'dmc_jaco':
-        make_fn = _make_jaco 
+        make_fn = _make_jaco
     elif env_type == 'gym':
         make_fn = _make_gym
     elif env_type == 'safe':

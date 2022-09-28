@@ -47,7 +47,7 @@ class SimplePointBot(Env, utils.EzPickle):
         self.action_space = Box(-np.ones(2) * MAX_FORCE,
                                 np.ones(2) * MAX_FORCE)
         if from_pixels:
-            self.observation_space = Box(-1, 1, (3, 64, 64))
+            self.observation_space = Box(-1, 1, (3, 64, 64), dtype=np.uint8)
         else:
             self.observation_space = Box(-np.ones(2) * np.float('inf'),
                                          np.ones(2) * np.float('inf'))
@@ -79,7 +79,8 @@ class SimplePointBot(Env, utils.EzPickle):
             "reward": cur_reward,
             "state": old_state,
             "next_state": next_state,
-            "action": a
+            "action": a,
+            "done": self.done
         }
 
     def reset(self, random_start=False):
@@ -255,8 +256,7 @@ class SimplePointBot(Env, utils.EzPickle):
         ax.add_patch(circle)
         circle = plt.Circle(self.end_pos, radius=3, color='k')
         ax.add_patch(circle)
-        ax.annotate("start", xy=(self.start_pos[0], self.start_pos[1] - 8), fontsize=10,
-                    ha="center")
+        ax.annotate("start", xy=(self.start_pos[0], self.start_pos[1] - 8), fontsize=10, ha="center")
         ax.annotate("goal", xy=(self.end_pos[0], self.end_pos[1] - 8), fontsize=10, ha="center")
 
 

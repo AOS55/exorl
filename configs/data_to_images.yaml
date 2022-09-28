@@ -1,0 +1,27 @@
+defaults:
+  - agent: ddpg
+  - override hydra/launcher: submitit_local
+
+
+env: SimplePointBot
+obs_type: pixels # [states, pixels]
+frame_stack: 1
+action_repeat: 1
+data_counts: 100
+data_dirs: datasets/pixels/SimplePointBot/diayn/buffer
+
+
+hydra:
+  run:
+    dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${agent.name}
+  sweep:
+    dir: ./exp_sweep/${now:%Y.%m.%d}/${now:%H%M}_${agent.name}_${experiment}
+    subdir: ${hydra.job.num}
+  launcher:
+    timeout_min: 4300
+    cpus_per_task: 10
+    gpus_per_node: 1
+    tasks_per_node: 1
+    mem_gb: 160
+    nodes: 1
+    submitit_folder: ./exp_sweep/${now:%Y.%m.%d}/${now:%H%M}_${agent.name}_${experiment}/.slurm

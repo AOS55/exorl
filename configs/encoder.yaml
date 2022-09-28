@@ -1,0 +1,43 @@
+defaults:
+  - agent: ddpg
+  - override hydra/launcher: submitit_local
+
+task: SimplePointBot_goal
+env: SimplePointBot
+obs_type: pixels # [states, pixels]
+frame_stack: 1
+action_repeat: 1
+discount: 0.99
+log_freq: 100
+# train settings
+enc_checkpoint: False
+d_latent: 32
+d_obs: (3, 64, 64)
+enc_init_iters: 100000
+enc_kl_multiplier: 1e-6
+enc_data_aug: False
+enc_lr: 1e-4
+enc_batch_size: 256
+plot_freq: 500
+checkpoint_freq: 2000
+seed: 1
+device: cuda
+use_tb: False
+use_wandb: False
+# experiment
+experiment: exp
+
+hydra:
+  run:
+    dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${agent.name}
+  sweep:
+    dir: ./exp_sweep/${now:%Y.%m.%d}/${now:%H%M}_${agent.name}_${experiment}
+    subdir: ${hydra.job.num}
+  launcher:
+    timeout_min: 4300
+    cpus_per_task: 10
+    gpus_per_node: 1
+    tasks_per_node: 1
+    mem_gb: 160
+    nodes: 1
+    submitit_folder: ./exp_sweep/${now:%Y.%m.%d}/${now:%H%M}_${agent.name}_${experiment}/.slurm

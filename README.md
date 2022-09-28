@@ -52,14 +52,39 @@ We provide the following workflows:
   ```sh
   python pretrain.py agent=UNSUPERVISED_AGENT domain=DOMAIN
   ```
-  **Sampling**, sampledemos from agent replay buffer on a specific domain
+  **Sampling**, sample demos from agent replay buffer on a specific task
   ```sh
-  python sampling.py agent=UNSUPERVISED_AGENT domain=DOMAIN samples=SAMPLES snapshot_ts=TS obs_type=OBS_TYPE
+  python sampling.py agent=UNSUPERVISED_AGENT task=TASK samples=SAMPLES snapshot_ts=TS obs_type=OBS_TYPE
   ```
   **Offline-learning**, learn a policy using the offline data collected on the specific task.
   ```sh
   python train_offline.py agent=OFFLINE_AGENT expl_agent=UNSUPERVISED_AGENT task=TASK
   ```
+
+### Safe Reinforcement Learning
+
+  **Pre-training**, learn from agents intrinsic reward on a specific domain
+  ```sh
+  python pretrain.py agent=UNSUPERVISED_AGENT domain=DOMAIN
+  ```
+  **Sampling**, sample demos from agent replay buffer with constraints and images
+  ```sh
+  python sampling.py agent=UNSUPERVISED_AGENT task=TASK samples=SAMPLES snapshot_ts=TS obs_type=OBS_TYPE
+  ```
+  **Trajectories to Images**, create image dataset from trajectories
+  ```sh
+  python data_to_images.py --env=DOMAIN
+  ```
+  **Train VAE**, train Variational Auto Encoder from the image dataset
+  ```sh
+  python train_encoder.py --env=DOMAIN
+  ```
+  **Train MPC**, train LS3 safe model predictive controller on specific domain
+  ```sh
+  python train_mpc.py --env=DOMAIN
+  ```
+
+  [Further details found here](docs/safe_learning.md)
 
 ****
 

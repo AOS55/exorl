@@ -1,0 +1,125 @@
+defaults:
+  - agent: ddpg
+  - override hydra/launcher: submitit_local
+
+
+# Task Settings
+task: SimplePointBot_goal
+env: SimplePointBot
+obs_type: pixels  # [states, pixels]
+frame_stack: 1
+action_repeat: 1
+discount: 1.0
+num_updates: 25
+log_freq: 100
+plot_freq: 500
+log_dir: ./logs
+
+# Module Settings
+# Encoder
+enc_checkpoint: ../../../models/spb/vae.pth
+d_latent: 32
+d_obs: [3, 64, 64]
+enc_init_iters: 100000
+enc_kl_multiplier: 1e-6
+enc_data_aug: false
+enc_lr: 1e-4
+enc_batch_size: 256
+checkpoint_freq: 2000
+# Safe-Set
+safe_set_checkpoint: False
+safe_set_ensemble: True
+d_act: 2
+plan_hor: 5
+random_percent: 1.0
+num_candidates: 1000
+num_elites: 100
+max_iters: 5
+safe_set_thresh: 0.8
+safe_set_thresh_mult: 0.8
+safe_set_thresh_mult_iters: 5
+safe_set_type: bellman  # bellman or bc
+safe_set_batch_size: 256
+safe_set_update_iters: 512
+safe_set_bellman_coef: 0.9
+safe_set_bellman_reduction: max  # add or max
+safe_set_n_models: 5
+safe_set_init_iters: 10
+safe_set_ignore: True
+bc_n_hidden: 3
+bc_hidden_size: 200
+bc_lr: 1e-4
+# Value Ensemble
+val_lr: 1e-4
+val_checkpoint: False
+val_n_models: 5
+val_reduction: mean
+val_discount: 0.99
+val_batch_size: 256
+val_init_iters: 10000
+val_targ_update_freq: 100
+val_targ_update_rate: 1.0
+val_update_iters: 2000
+val_n_hidden: 3
+val_hidden_size: 200
+val_ensemble: True
+horizon: 100
+traj_per_update: 10
+# PETS Dynamics
+dyn_checkpoint: False
+dyn_normalize_delta: False
+dyn_init_iters: 10000
+dyn_update_iters: 512
+dyn_batch_size: 256
+n_particles: 20
+dyn_n_models: 5
+dyn_size: 128
+dyn_n_layers: 3
+dyn_lr: 1e-3
+# Goal Indicator
+gi_checkpoint: False
+gi_batch_size: 256
+gi_update_iters: 512
+gi_thresh: 0.5
+gi_n_hidden: 3
+gi_hidden_size: 200
+gi_lr: 1e-4
+gi_init_iters: 10000
+# Constraint Estimator
+constr_init_iters: 10000
+constr_thresh: 0.2
+constr_ignore: True
+constr_update_iters: 512
+constr_checkpoint: False
+constr_batch_size: 256
+constr_n_hidden: 3
+constr_hidden_size: 200
+constr_lr: 1e-4
+
+# Replay Buffer
+data_dirs: datasets/pixels/SimplePointBot/diayn/buffer
+data_counts: 1000
+buffer_size: 35000
+
+# Misc Settings
+seed: 1
+device: cuda
+use_tb: False
+use_wandb: False
+# Experiment
+experiment: exp
+
+hydra:
+  run:
+    dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${agent.name}
+  sweep:
+    dir: ./exp_sweep/${now:%Y.%m.%d}/${now:%H%M}_${agent.name}_${experiment}
+    subdir: ${hydra.job.num}
+  launcher:
+    timeout_min: 4300
+    cpus_per_task: 10
+    gpus_per_node: 1
+    tasks_per_node: 1
+    mem_gb: 160
+    nodes: 1
+    submitit_folder: ./exp_sweep/${now:%Y.%m.%d}/${now:%H%M}_${agent.name}_${experiment}/.slurm

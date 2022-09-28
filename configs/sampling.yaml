@@ -7,9 +7,10 @@ reward_free: false
 # task settings
 task: walker_stand
 obs_type: states # [states, pixels]
-frame_stack: 3 # only works if obs_type=pixels
+frame_stack: 1 # only works if obs_type=pixels
 action_repeat: 1 # set to 2 for pixels
 discount: 0.99
+skill_dim: 500
 # train settings
 num_train_frames: 2000010
 num_seed_frames: 4000
@@ -17,9 +18,10 @@ num_seed_frames: 4000
 eval_every_frames: 10000
 num_eval_episodes: 10
 # sample settings
-num_sample_episodes: 2000010
+num_sample_episodes: 1000
+data_type: unsupervised  # either offline_rl or unsupervised changes the data collected from the environment
 # pretrained
-snapshot_ts: 100000
+snapshot_ts: 500000
 snapshot_base_dir: ./../../../data/models/
 # replay buffer
 replay_buffer_size: 1000000
