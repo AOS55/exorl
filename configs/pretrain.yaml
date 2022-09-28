@@ -11,7 +11,6 @@ frame_stack: 1 # only works if obs_type=pixels
 action_repeat: 1 # set to 2 for pixels
 skill_dim: 10
 discount: 0.99
-skill_dim: 500
 # train settings
 num_train_frames: 2000010
 num_seed_frames: 4000
