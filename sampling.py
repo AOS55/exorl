@@ -89,7 +89,7 @@ class Workspace:
                                                 cfg.replay_buffer_size,
                                                 cfg.batch_size,
                                                 cfg.replay_buffer_num_workers,
-                                                False, cfg.nstep, cfg.discount)
+                                                True, cfg.nstep, cfg.discount)
 
         meta_specs = self.agent.get_meta_specs()
 
@@ -200,7 +200,6 @@ class Workspace:
                 snapshot = snapshot_dir / f'{self.cfg.skill_dim}' / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
             else:
                 snapshot = snapshot_dir / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
-            import os
             print(f'current dir is: {os.getcwd()}')
             print(f'snapshot file location is: {snapshot}')
             print(f'snapshot exists: {snapshot.exists()}')
