@@ -23,7 +23,6 @@ from utils.env_constructor import make, ENV_TYPES
 from libraries.latentsafesets.policy import CEMSafeSetPolicy
 from libraries.latentsafesets.utils import utils
 from libraries.latentsafesets.utils import plot_utils as pu
-from libraries.latentsafesets.utils.arg_parser import parse_args
 from libraries.latentsafesets.rl_trainers import MPCTrainer
 from libraries.safe import SimplePointBot as SPB
 from gym.wrappers import FrameStack
@@ -32,14 +31,15 @@ from gym.wrappers import FrameStack
 def make_env(cfg):
     # create env
     if cfg.obs_type=='pixels':
-        env = SPB(from_pixels=cfg.obs_type)
+        env = SPB(from_pixels=True)
     elif cfg.obs_type=='states':
-        env = SPB(from_pixels=cfg.obs_type)
+        env = SPB(from_pixels=False)
     else:
         print(f'obs_type: {cfg.obs_type} is not valid should be pixels or states')
     if cfg.frame_stack > 1:
         env = FrameStack(env, cfg.frame_stack)
     return env
+
 
 class Workspace:
     def __init__(self, cfg):
@@ -72,7 +72,10 @@ class Workspace:
         self.goal_indicator = modules['gi']
         self.constraint_function = modules['constr']
 
-        self.replay_buffer = utils.load_replay_buffer(cfg, self.encoder)
+        if cfg.obs_type == 'pixels':
+            self.replay_buffer = utils.load_replay_buffer(cfg, self.encoder)
+        else:
+            self.replay_buffer = utils.load_replay_buffer(cfg, None)
         self.trainer = MPCTrainer(self.train_env, cfg, modules)
         self.trainer.initial_train(self.replay_buffer)
         print('Creating Policy')
@@ -110,26 +113,42 @@ class Workspace:
                 done = False
 
                 # Maintain ground truth info for plotting purposes
-                movie_traj = [{'obs': obs.reshape((-1, 3, 64, 64))[0]}]
+                if self.cfg.obs_type == 'pixels':
+                    movie_traj = [{'obs': obs.reshape((-1, 3, 64, 64))[0]}]
+                else:
+                    image = self.train_env._state_to_image(obs)
+                    movie_traj = [{'obs': image}]
                 traj_rews = []
                 constr_viol = False
                 succ = False
                 for idz in trange(self.horizon):
+                    # TODO: Check if this is needed when working from state inputs
                     action = self.policy.act(obs / 255)
                     next_obs, reward, done, info = self.train_env.step(action)
                     next_obs = np.array(next_obs)
-                    movie_traj.append({'obs': next_obs.reshape((-1, 3, 64, 64))[0]})
+                    if self.cfg.obs_type == 'pixels':
+                        movie_traj.append({'obs': next_obs.reshape((-1, 3, 64, 64))[0]})
+                    else:
+                        image = self.train_env._state_to_image(obs)
+                        movie_traj.append({'obs': image})
                     traj_rews.append(reward)
 
                     constr = info['constraint']
-                    transition = {'obs': obs, 'action': action, 'reward': reward,
-                                  'next_obs': next_obs, 'done': done, 
-                                  'constraint': constr, 'safe_set': 0, 'on_policy': 1, 'discount': self.discount}
+                    if self.cfg.obs_type == 'pixels':
+                        transition = {'obs': obs, 'action': action, 'reward': reward,
+                                    'next_obs': next_obs, 'done': done, 
+                                    'constraint': constr, 'safe_set': 0,
+                                    'on_policy': 1, 'discount': self.discount}
+                    else:
+                        transition = {'obs': obs, 'action': action, 'reward': reward,
+                                    'next_obs': next_obs, 'done': done, 
+                                    'constraint': constr, 'safe_set': 0,
+                                    'on_policy': 1}
                     transitions.append(transition)
                     obs = next_obs
                     constr_viol = constr_viol or info['constraint']
                     succ = succ or reward == 0
-                    if done: 
+                    if done:
                         break
             transitions[-1]['done'] = 1
             traj_reward = sum(traj_rews)
@@ -153,6 +172,7 @@ class Workspace:
                 transition['rtg'] = rtg
 
                 rtg = rtg + transition['reward']
+
 
             self.replay_buffer.store_transitions(transitions)
             update_rewards.append(traj_reward)
