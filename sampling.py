@@ -3,6 +3,7 @@ import warnings
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 
 import os
+import shutil
 os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
 os.environ['MUJOCO_GL'] = 'egl'
 
@@ -134,50 +135,50 @@ class Workspace:
         meta = self.agent.init_meta()
 
         self.replay_storage.add(time_step, meta)
-        while train_until_step(self.global_step):
-            while sample_until_step(episode):
-                time_step = self.sample_env.reset()
-                if self.cfg.agent.name not in self.prior_encoded_agents:
-                    # Update agent if not in the reward      
-                    meta = self.agent.update_meta(meta, self.global_step, time_step)
-                    self.sample_env._env._env._env._env.environment.reset(random_start=False)
-                else:
-                    meta = self.agent.init_meta()
-                self.replay_storage.add(time_step, meta)
-                self.video_recorder.init(self.sample_env, enabled=True)
-                trajectory = []
-                while not time_step.last():
-                    with torch.no_grad(), utils.eval_mode(self.agent):
-                        action = self.agent.act(time_step.observation,
-                                                meta,
-                                                self.global_step,
-                                                eval_mode=True)
-                    time_step = self.sample_env.step(action)
-                    self.video_recorder.record(self.sample_env)
-                    total_reward += time_step.reward
-                    trajectory.append(time_step)
-                    step += 1
-                    self._global_step += 1
-                    
-                    if self.cfg.data_type == 'unsupervised':
-                        # TODO: Provide a less hacky way of accessing info from environment
-                        info = self.sample_env._env._env._env._env.get_info()
-                        if self.meta_encoded:
-                            unsupervised_data = {'meta': meta, 'constraint': info['constraint'], 'done': info['done']}
-                        else:
-                            unsupervised_data = {'constraint': info['constraint'], 'done': info['done']}
-                        self.replay_storage.add(time_step, unsupervised_data)
+        while sample_until_step(episode):
+            time_step = self.sample_env.reset()
+            if self.cfg.agent.name not in self.prior_encoded_agents:
+                # Update agent if not in the reward      
+                meta = self.agent.update_meta(meta, self.global_step, time_step)
+                self.sample_env._env._env._env._env.environment.reset(random_start=False)
+            else:
+                meta = self.agent.init_meta()
+            self.replay_storage.add(time_step, meta)
+            self.video_recorder.init(self.sample_env, enabled=True)
+            trajectory = []
+            while not time_step.last():
+                with torch.no_grad(), utils.eval_mode(self.agent):
+                    action = self.agent.act(time_step.observation,
+                                            meta,
+                                            self.global_step,
+                                            eval_mode=True)
+                time_step = self.sample_env.step(action)
+                self.video_recorder.record(self.sample_env)
+                total_reward += time_step.reward
+                trajectory.append(time_step)
+                step += 1
+                self._global_step += 1
+                
+                if self.cfg.data_type == 'unsupervised':
+                    # TODO: Provide a less hacky way of accessing info from environment
+                    info = self.sample_env._env._env._env._env.get_info()
+                    if self.meta_encoded:
+                        unsupervised_data = {'meta': meta, 'constraint': info['constraint'], 'done': info['done']}
                     else:
-                        self.replay_storage.add(time_step, meta)
+                        unsupervised_data = {'constraint': info['constraint'], 'done': info['done']}
+                    self.replay_storage.add(time_step, unsupervised_data)
+                else:
+                    self.replay_storage.add(time_step, meta)
 
-                episode += 1
-                # skill_index = str(meta['skill'])
-                if not seed_until_step(self.global_step):
-                    if self.cfg.agent.name not in self.prior_encoded_agents:
-                        batch = next(self.replay_iter)
-                        algo_batch = batch[0:5]
-                        algo_iter = iter([algo_batch])
-                        self.agent.update(algo_iter, self.global_step)
+            episode += 1
+            # skill_index = str(meta['skill'])
+            if not seed_until_step(self.global_step):
+                if self.cfg.agent.name not in self.prior_encoded_agents:
+                    batch = next(self.replay_iter)
+                    algo_batch = batch[0:5]
+                    algo_iter = iter([algo_batch])
+                    self.agent.update(algo_iter, self.global_step)
+            if self.cfg.save_video:
                 self.video_recorder.save(f'{episode}.mp4')
 
         with self.logger.log_and_dump_ctx(self.global_frame, ty='eval') as log:
@@ -189,6 +190,22 @@ class Workspace:
         # Store data in values
         buffer_path = os.path.join(self.work_dir, 'buffer')
         os.rename(buffer_path, f'{self.cfg.agent.name}_{self.cfg.snapshot_ts}')
+        if self.cfg.save_to_data:
+            domain, _ = self.cfg.task.split('_', 1)
+            if self.cfg.agent.name == 'diayn':
+                target_path = f'./../../../data/datasets/{self.cfg.obs_type}/{domain}/{self.cfg.agent.name}/{self.cfg.skill_dim}/{self.cfg.seed}/{self.cfg.snapshot_ts}'
+            else:
+                target_path = f'./../../../data/datasets/{self.cfg.obs_type}/{domain}/{self.agent.name}/{self.cfg.seed}/{self.cfg.snapsot_ts}'
+            if not os.path.exists(target_path):
+                os.makedirs(target_path)
+            source_path = os.path.join(self.work_dir, f'{self.cfg.agent.name}_{self.cfg.snapshot_ts}')
+            print(f'beginning to move: {source_path} -> {target_path}')
+            for file_name in os.listdir(source_path):
+                source = os.path.join(source_path, file_name)
+                target = os.path.join(target_path, file_name)
+                if os.path.isfile(source):
+                    shutil.move(source, target)
+
     
     def load_snapshot(self):
         snapshot_base_dir = Path(self.cfg.snapshot_base_dir)
@@ -196,7 +213,7 @@ class Workspace:
         snapshot_dir = snapshot_base_dir / self.cfg.obs_type / domain / self.cfg.agent.name
 
         def try_load(seed):
-            if self.cfg.agent == 'diayn':
+            if self.cfg.agent.name == 'diayn':
                 snapshot = snapshot_dir / f'{self.cfg.skill_dim}' / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
             else:
                 snapshot = snapshot_dir / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
