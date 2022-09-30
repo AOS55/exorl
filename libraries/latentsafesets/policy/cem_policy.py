@@ -74,9 +74,12 @@ class CEMSafeSetPolicy(Policy):
         Returns: An action (and possibly the predicted cost)
         """
 
-        # encode observation:
-        obs = ptu.torchify(obs).reshape(1, *self.d_obs)
-        emb = self.encoder.encode(obs)
+        if self.encoder:
+            # encode observation:
+            obs = ptu.torchify(obs).reshape(1, *self.d_obs)
+            emb = self.encoder.encode(obs)
+        else:
+            emb = ptu.torchify(obs).reshape(1, *self.d_obs)
 
         itr = 0
         reset_count = 0

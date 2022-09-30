@@ -74,5 +74,4 @@ class ValueTrainer(Trainer):
 
     def plot(self, file, replay_buffer):
         obs = replay_buffer.sample(30)['obs']
-        pu.visualize_value(obs, self.value, file=file,
-                           env=self.env)
+        pu.visualize_value(obs, self.value, file=file, env=self.env, obs_type=self.cfg.obs_type)

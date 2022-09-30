@@ -1,9 +1,9 @@
 from ..utils import pytorch_utils as ptu
 from ..utils import spb_utils as spbu
 from ..utils import bottleneck_utils as bnnu
-from libraries.safe import SimplePointBot
-from libraries.safe import SimpleVelocityBot
-from libraries.safe import BottleNeck
+from libraries.safe.simple_point_bot import SimplePointBot
+from libraries.safe.simple_velocity_bot import SimpleVelocityBot
+from libraries.safe.bottleneck_nav import BottleNeck
 
 from sys import platform
 if platform == 'darwin':
@@ -94,18 +94,21 @@ def make_movie(trajectory, file):
     clip.write_videofile(file, fps=10, codec=codec)
 
 
-def visualize_value(obs, value_func, file, env=None):
+def visualize_value(obs, value_func, file, env=None, obs_type='pixels'):
     """
     Sorts the observations to show which ones have high value, which ones low
     """
     if issubclass(type(env), SimplePointBot) or issubclass(type(env), SimpleVelocityBot):
-        spbu.evaluate_value_func(value_func, env, file=file, skip=2)
+        spbu.evaluate_value_func(value_func, env, file=file, skip=2, obs_type=obs_type)
         return
     if issubclass(type(env), BottleNeck):
         bnnu.evaluate_value_func(value_func, env, file=file, skip=2)
         return
     values = value_func.forward_np(obs, already_embedded=True).squeeze()
-    obs = ptu.to_numpy(value_func.encoder.decode(ptu.torchify(obs)))
+    if obs_type == 'pixels':
+        obs = ptu.to_numpy(value_func.encoder.decode(ptu.torchify(obs)))
+    else:
+        obs = ptu.to_numpy(ptu.torchify(obs))
     sort_ind = np.argsort(values)
     low_ind = sort_ind[:5]
     high_ind = sort_ind[-5:]
@@ -133,16 +136,18 @@ def visualize_value(obs, value_func, file, env=None):
     plt.close()
 
 
-def visualize_safe_set(obs, safe_set, file, env=None):
+def visualize_safe_set(obs, safe_set, file, env=None, obs_type='pixels'):
     if issubclass(type(env), SimplePointBot) or issubclass(type(env), SimpleVelocityBot):
-        spbu.evaluate_safe_set(safe_set, env, file=file, skip=2)
+        spbu.evaluate_safe_set(safe_set, env, file=file, skip=2, obs_type=obs_type)
         return
     if issubclass(type(env), BottleNeck):
         bnnu.evaluate_safe_set(safe_set, env, file=file, skip=2)
         return
     ss = safe_set.safe_set_probability_np(obs, already_embedded=True).squeeze()
-
-    obs = ptu.to_numpy(safe_set.encoder.decode(ptu.torchify(obs)))
+    if obs_type == 'pixels':
+        obs = ptu.to_numpy(safe_set.encoder.decode(ptu.torchify(obs)))
+    else:
+        obs = ptu.to_numpy(ptu.torchify(obs))
     ss = ss > 0.8
     nonzeros = np.nonzero(ss)[0]
     zeros = np.nonzero(np.logical_not(ss))[0]
@@ -178,15 +183,18 @@ def visualize_safe_set(obs, safe_set, file, env=None):
     plt.close()
 
 
-def visualize_onezero(obs, onezero, file, env=None):
+def visualize_onezero(obs, onezero, file, env=None, obs_type='pixels'):
     if issubclass(type(env), SimplePointBot) or issubclass(type(env), SimpleVelocityBot):
-        spbu.evaluate_constraint_func(onezero, env, file=file, skip=2)
+        spbu.evaluate_constraint_func(onezero, env, file=file, skip=2, obs_type=obs_type)
         return
     if issubclass(type(env), BottleNeck):
-        bnnu.evaluate_constraint_func(onezero, env, file=file, skip=2)
+        bnnu.evaluate_constraint_func(onezero, env, file=file, skip=2, obs_type=obs_type)
         return
     ss = onezero.prob(obs, already_embedded=True).squeeze()
-    obs = ptu.to_numpy(onezero.encoder.decode(ptu.torchify(obs)))
+    if obs_type == 'pixels':
+        obs = ptu.to_numpy(onezero.encoder.decode(ptu.torchify(obs)))
+    else:
+        obs = ptu.to_numpy(ptu.torchify(obs))
     # print(ss)
     ss = ss > 0.8
     nonzeros = np.nonzero(ss)[0]
@@ -224,7 +232,7 @@ def visualize_onezero(obs, onezero, file, env=None):
     plt.close()
 
 
-def visualize_dynamics(obs_seqs, act_seqs, dynamics_func, encoder, file):
+def visualize_dynamics(obs_seqs, act_seqs, dynamics_func, encoder, file, obs_type='pixels'):
     """
 
     :param obs_seqs: Sequence of observations, (n, time, *d_obs)
@@ -240,13 +248,24 @@ def visualize_dynamics(obs_seqs, act_seqs, dynamics_func, encoder, file):
 
         act_seq = ptu.torchify(act_seq)
         predictions = dynamics_func.predict(obs_0, act_seq, already_embedded=True)
-        predictions_decoded = encoder.decode(predictions).detach().cpu().numpy()
+
+        if obs_type == 'pixels':
+            predictions_decoded = encoder.decode(predictions).detach().cpu().numpy()
+        else:
+            predictions_decoded = predictions.detach().cpu().numpy()
+
         predictions_decoded = predictions_decoded[0].squeeze()
 
         predictions_model_mean = predictions.mean(dim=0)
-        predictions_mm_decoded = encoder.decode(predictions_model_mean).detach().cpu().numpy().squeeze()
+        if obs_type == 'pixels':
+            predictions_mm_decoded = encoder.decode(predictions_model_mean).detach().cpu().numpy().squeeze()
+        else:
+            predictions_mm_decoded = predictions_model_mean.detach().cpu().numpy().squeeze()
 
-        obs_seq_recoded = encoder.decode(ptu.torchify(obs_seq)).detach().cpu().numpy()
+        if obs_type == 'pixels':
+            obs_seq_recoded = encoder.decode(ptu.torchify(obs_seq)).detach().cpu().numpy()
+        else:
+            obs_seq_recoded = ptu.torchify(obs_seq).detach().cpu().numpy()
 
         obs_seq = obs_seq[1:]
         obs_seq_recoded = obs_seq_recoded[1:]
@@ -264,7 +283,7 @@ def visualize_dynamics(obs_seqs, act_seqs, dynamics_func, encoder, file):
     make_movie(ims, file)
 
 
-def visualize_plan(obs, act_seq, dynamics, file):
+def visualize_plan(obs, act_seq, dynamics, file, obs_type='pixels'):
     encoder = dynamics.encoder
 
     act_seq = act_seq[None]
@@ -273,7 +292,10 @@ def visualize_plan(obs, act_seq, dynamics, file):
     act_seq = ptu.torchify(act_seq)
     predictions = dynamics.predict(obs, act_seq, already_embedded=True)
     predictions_model_mean = predictions.mean(dim=0)
-    predictions_decoded = encoder.decode(predictions_model_mean).detach().cpu().numpy().squeeze()
+    if obs_type == 'pixels':
+        predictions_decoded = encoder.decode(predictions_model_mean).detach().cpu().numpy().squeeze()
+    else:
+        predictions_decoded = predictions_model_mean.detach().cpu().numpy().squeeze()
 
     ims = []
     for pred in list(predictions_decoded):

@@ -11,14 +11,21 @@ def evaluate_safe_set(s_set,
                       file=None,
                       plot=True,
                       show=False,
-                      skip=2):
+                      skip=2,
+                      obs_type='pixels'):
     data = np.zeros((spb.WINDOW_HEIGHT, spb.WINDOW_WIDTH))
     for y in tqdm(range(0, spb.WINDOW_HEIGHT, skip)):
         row_states = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
-            state = env._state_to_image((x, y)) / 255
+            if obs_type == 'pixels':
+                state = env._state_to_image((x, y)) / 255
+            else:
+                state = (x, y)
             row_states.append(state)
-        vals = s_set.safe_set_probability_np(np.array(row_states)).squeeze()
+        if obs_type == 'pixels':
+            vals = s_set.safe_set_probability_np(np.array(row_states)).squeeze()
+        else:
+            vals = s_set.safe_set_probability_np(np.array(row_states), already_embedded=True).squeeze()
         if skip == 1:
             data[y] = vals.squeeze()
         elif skip == 2:
@@ -38,14 +45,21 @@ def evaluate_value_func(value_func,
                         file=None,
                         plot=True,
                         show=False,
-                        skip=2):
+                        skip=2,
+                        obs_type='pixels'):
     data = np.zeros((spb.WINDOW_HEIGHT, spb.WINDOW_WIDTH))
     for y in tqdm(range(0, spb.WINDOW_HEIGHT, skip)):
         row_states = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
-            state = env._state_to_image((x, y)) / 255
+            if obs_type == 'pixels':
+                state = env._state_to_image((x, y)) / 255
+            else:
+                state = (x, y)
             row_states.append(state)
-        vals = value_func.get_value_np(np.array(row_states)).squeeze()
+        if obs_type == 'pixels':
+            vals = value_func.get_value_np(np.array(row_states)).squeeze()
+        else:
+            vals = value_func.get_value_np(np.array(row_states), already_embedded=True).squeeze()
         if skip == 1:
             data[y] = vals.squeeze()
         elif skip == 2:
@@ -65,14 +79,21 @@ def evaluate_constraint_func(constraint,
                              file=None,
                              plot=True,
                              show=False,
-                             skip=2):
+                             skip=2,
+                             obs_type='pixels'):
     data = np.zeros((spb.WINDOW_HEIGHT, spb.WINDOW_WIDTH))
     for y in tqdm(range(0, spb.WINDOW_HEIGHT, skip)):
         row_states = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
-            state = env._state_to_image((x, y)) / 255
+            if obs_type == 'pixels':
+                state = env._state_to_image((x, y)) / 255
+            else:
+                state = (x, y)
             row_states.append(state)
-        vals = constraint.prob(np.array(row_states)).squeeze()
+        if obs_type == 'pixels':
+            vals = constraint.prob(np.array(row_states), already_embedded=False).squeeze()
+        else:
+            vals = constraint.prob(np.array(row_states), already_embedded=True).squeeze()
         if skip == 1:
             data[y] = vals.squeeze()
         elif skip == 2:
