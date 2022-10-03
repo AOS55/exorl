@@ -97,7 +97,7 @@ constr_hidden_size: 200
 constr_lr: 1e-4
 
 # Replay Buffer
-data_dirs: datasets/states/SimplePointBot/controller/SimplePointBot
+data_dirs: datasets/states/SimplePointBot/controller/prioritized_sampling
 data_counts: 200
 buffer_size: 35000
 
