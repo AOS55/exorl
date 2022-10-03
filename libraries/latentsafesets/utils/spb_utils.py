@@ -20,7 +20,7 @@ def evaluate_safe_set(s_set,
             if obs_type == 'pixels':
                 state = env._state_to_image((x, y)) / 255
             else:
-                state = (x, y)
+                state = (x/255, y/255)
             row_states.append(state)
         if obs_type == 'pixels':
             vals = s_set.safe_set_probability_np(np.array(row_states)).squeeze()
@@ -54,7 +54,7 @@ def evaluate_value_func(value_func,
             if obs_type == 'pixels':
                 state = env._state_to_image((x, y)) / 255
             else:
-                state = (x, y)
+                state = (x/255, y/255)
             row_states.append(state)
         if obs_type == 'pixels':
             vals = value_func.get_value_np(np.array(row_states)).squeeze()
@@ -88,7 +88,7 @@ def evaluate_constraint_func(constraint,
             if obs_type == 'pixels':
                 state = env._state_to_image((x, y)) / 255
             else:
-                state = (x, y)
+                state = (x/255, y/255)
             row_states.append(state)
         if obs_type == 'pixels':
             vals = constraint.prob(np.array(row_states), already_embedded=False).squeeze()
