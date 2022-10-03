@@ -60,6 +60,7 @@ class Workspace:
 
         # initialize from pretrained
         if cfg.snapshot_ts > 0:
+            print(f'snapshot is: {self.load_snapshot()}')
             pretrained_agent = self.load_snapshot()['agent']
             self.agent.init_from(pretrained_agent)
 
@@ -224,11 +225,17 @@ class Workspace:
         snapshot_dir = snapshot_base_dir / self.cfg.obs_type / domain / self.cfg.agent.name
 
         def try_load(seed):
-            snapshot = snapshot_dir / str(
-                seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
+            if self.cfg.agent.name == 'diayn':
+                snapshot = snapshot_dir / f'{self.cfg.skill_dim}' / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
+            else:
+                snapshot = snapshot_dir / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
+            print(f'current dir is: {os.getcwd()}')
+            print(f'snapshot file location is: {snapshot}')
+            print(f'snapshot exists: {snapshot.exists()}')
             if not snapshot.exists():
                 return None
             with snapshot.open('rb') as f:
+                print(f'f is: {f}')
                 payload = torch.load(f)
             return payload
 
@@ -250,10 +257,6 @@ def main(cfg):
     from finetune import Workspace as W
     root_dir = Path.cwd()
     workspace = W(cfg)
-    snapshot = root_dir / 'snapshot.pt'
-    if snapshot.exists():
-        print(f'resuming: {snapshot}')
-        workspace.load_snapshot()
     workspace.train()
 
 
