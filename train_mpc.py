@@ -123,7 +123,10 @@ class Workspace:
                 succ = False
                 for idz in trange(self.horizon):
                     # TODO: Check if this is needed when working from state inputs
-                    action = self.policy.act(obs / 255)
+                    if self.cfg.obs_type == 'pixels':
+                        action = self.policy.act(obs / 255)
+                    else:
+                        action = self.policy.act(obs / 255)
                     next_obs, reward, done, info = self.train_env.step(action)
                     next_obs = np.array(next_obs)
                     if self.cfg.obs_type == 'pixels':
@@ -173,7 +176,7 @@ class Workspace:
 
                 rtg = rtg + transition['reward']
 
-
+            print(f'transition.keys(): {transition.keys()}')
             self.replay_buffer.store_transitions(transitions)
             update_rewards.append(traj_reward)
 
