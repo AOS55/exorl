@@ -74,9 +74,12 @@ class CEMSafeSetPolicy(Policy):
         Returns: An action (and possibly the predicted cost)
         """
 
-        # encode observation:
-        obs = ptu.torchify(obs).reshape(1, *self.d_obs)
-        emb = self.encoder.encode(obs)
+        if self.encoder:
+            # encode observation:
+            obs = ptu.torchify(obs).reshape(1, *self.d_obs)
+            emb = self.encoder.encode(obs)
+        else:
+            emb = ptu.torchify(obs).reshape(1, *self.d_obs)
 
         itr = 0
         reset_count = 0
@@ -141,7 +144,6 @@ class CEMSafeSetPolicy(Policy):
                     constraint_viols = torch.sum(torch.max(constraints_all, dim=0)[0] > self.constraint_thresh, dim=1)
                 else:
                     constraint_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)
-
                 if not self.ignore_safe_set:
                     safe_set_all = self.safe_set.safe_set_probability(last_states, already_embedded=True)
                     safe_set_viols = torch.mean(safe_set_all

@@ -1,4 +1,5 @@
 import warnings
+from collections import OrderedDict
 
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 
@@ -130,6 +131,7 @@ class Workspace:
         train_until_step = utils.Until(self.cfg.num_train_frames,
                                        self.cfg.action_repeat)
         sample_until_step = utils.Until(self.cfg.num_sample_episodes)
+        prioritize_sample_until_step = utils.Until(self.cfg.num_prioritize_sample_episodes)
         step, episode, total_reward = 0, 0, 0
         time_step = self.sample_env.reset()
         meta = self.agent.init_meta()
@@ -190,22 +192,179 @@ class Workspace:
         # Store data in values
         buffer_path = os.path.join(self.work_dir, 'buffer')
         os.rename(buffer_path, f'{self.cfg.agent.name}_{self.cfg.snapshot_ts}')
-        if self.cfg.save_to_data:
-            domain, _ = self.cfg.task.split('_', 1)
-            if self.cfg.agent.name == 'diayn':
-                target_path = f'./../../../data/datasets/{self.cfg.obs_type}/{domain}/{self.cfg.agent.name}/{self.cfg.skill_dim}/{self.cfg.seed}/{self.cfg.snapshot_ts}'
-            else:
-                target_path = f'./../../../data/datasets/{self.cfg.obs_type}/{domain}/{self.agent.name}/{self.cfg.seed}/{self.cfg.snapsot_ts}'
-            if not os.path.exists(target_path):
-                os.makedirs(target_path)
-            source_path = os.path.join(self.work_dir, f'{self.cfg.agent.name}_{self.cfg.snapshot_ts}')
-            print(f'beginning to move: {source_path} -> {target_path}')
-            for file_name in os.listdir(source_path):
-                source = os.path.join(source_path, file_name)
-                target = os.path.join(target_path, file_name)
-                if os.path.isfile(source):
-                    shutil.move(source, target)
+        domain, _ = self.cfg.task.split('_', 1)
+        source_path = os.path.join(self.work_dir, f'{self.cfg.agent.name}_{self.cfg.snapshot_ts}')
 
+        # Sample from skill
+        norm_skill_reward = np.array(self.skill_reward_sum(source_path))
+        norm_skill_constraint = np.array(self.skill_constraint_sum(source_path))
+        print(norm_skill_reward)
+        print(norm_skill_constraint)
+
+        reward_skills = np.where(norm_skill_reward > -100.0)[0]
+        constraint_skills = np.where(norm_skill_constraint > 0.0)[0]
+        print(f'reward_skills: {reward_skills}')
+        print(f'constraint_skills: {constraint_skills}')
+        
+        os.makedirs(os.path.join(self.work_dir, 'buffer'))
+        # sample from reward priors
+        step, episode, total_reward = 0, 0, 0
+        while prioritize_sample_until_step(episode):
+            time_step = self.sample_env.reset()
+            skill = np.zeros(self.cfg.skill_dim, dtype=np.float32)
+            skill[np.random.choice(reward_skills)] = 1.0
+            meta = OrderedDict()
+            meta['skill'] = skill
+            self.replay_storage.add(time_step, meta)
+            self.video_recorder.init(self.sample_env, enabled=True)
+            trajectory = []
+            while not time_step.last():
+                with torch.no_grad(), utils.eval_mode(self.agent):
+                    action = self.agent.act(time_step.observation,
+                                            meta,
+                                            self.global_step,
+                                            eval_mode=True)
+                time_step = self.sample_env.step(action)
+                self.video_recorder.record(self.sample_env)
+                total_reward += time_step.reward
+                trajectory.append(time_step)
+                step += 1
+                self._global_step += 1
+                
+                if self.cfg.data_type == 'unsupervised':
+                    # TODO: Provide a less hacky way of accessing info from environment
+                    info = self.sample_env._env._env._env._env.get_info()
+                    if self.meta_encoded:
+                        unsupervised_data = {'meta': meta, 'constraint': info['constraint'], 'done': info['done']}
+                    else:
+                        unsupervised_data = {'constraint': info['constraint'], 'done': info['done']}
+                    self.replay_storage.add(time_step, unsupervised_data)
+                else:
+                    self.replay_storage.add(time_step, meta)
+
+            episode += 1
+            # skill_index = str(meta['skill'])
+            if not seed_until_step(self.global_step):
+                if self.cfg.agent.name not in self.prior_encoded_agents:
+                    batch = next(self.replay_iter)
+                    algo_batch = batch[0:5]
+                    algo_iter = iter([algo_batch])
+                    self.agent.update(algo_iter, self.global_step)
+            if self.cfg.save_video:
+                self.video_recorder.save(f'{episode}.mp4')
+
+        with self.logger.log_and_dump_ctx(self.global_frame, ty='eval') as log:
+            log('episode_reward', total_reward / episode)
+            log('episode_length', step * self.cfg.action_repeat / episode)
+            log('episode', self.global_episode)
+            log('step', self.global_step)
+
+        # Store data in values
+        buffer_path = os.path.join(self.work_dir, 'buffer')
+        os.rename(buffer_path, f'reward_{self.cfg.agent.name}_{self.cfg.snapshot_ts}')
+        domain, _ = self.cfg.task.split('_', 1)
+        source_path = os.path.join(self.work_dir, f'{self.cfg.agent.name}_{self.cfg.snapshot_ts}')
+        
+        os.makedirs(os.path.join(self.work_dir, 'buffer'))
+        # sample from constraint priors
+        step, episode, total_reward = 0, 0, 0
+        while prioritize_sample_until_step(episode):
+            time_step = self.sample_env.reset()
+            skill = np.zeros(self.cfg.skill_dim, dtype=np.float32)
+            skill[np.random.choice(constraint_skills)] = 1.0
+            meta = OrderedDict()
+            meta['skill'] = skill
+            self.replay_storage.add(time_step, meta)
+            self.video_recorder.init(self.sample_env, enabled=True)
+            trajectory = []
+            while not time_step.last():
+                with torch.no_grad(), utils.eval_mode(self.agent):
+                    action = self.agent.act(time_step.observation,
+                                            meta,
+                                            self.global_step,
+                                            eval_mode=True)
+                time_step = self.sample_env.step(action)
+                self.video_recorder.record(self.sample_env)
+                total_reward += time_step.reward
+                trajectory.append(time_step)
+                step += 1
+                self._global_step += 1
+                
+                if self.cfg.data_type == 'unsupervised':
+                    # TODO: Provide a less hacky way of accessing info from environment
+                    info = self.sample_env._env._env._env._env.get_info()
+                    if self.meta_encoded:
+                        unsupervised_data = {'meta': meta, 'constraint': info['constraint'], 'done': info['done']}
+                    else:
+                        unsupervised_data = {'constraint': info['constraint'], 'done': info['done']}
+                    self.replay_storage.add(time_step, unsupervised_data)
+                else:
+                    self.replay_storage.add(time_step, meta)
+
+            episode += 1
+            # skill_index = str(meta['skill'])
+            if not seed_until_step(self.global_step):
+                if self.cfg.agent.name not in self.prior_encoded_agents:
+                    batch = next(self.replay_iter)
+                    algo_batch = batch[0:5]
+                    algo_iter = iter([algo_batch])
+                    self.agent.update(algo_iter, self.global_step)
+            if self.cfg.save_video:
+                self.video_recorder.save(f'{episode}.mp4')
+
+        with self.logger.log_and_dump_ctx(self.global_frame, ty='eval') as log:
+            log('episode_reward', total_reward / episode)
+            log('episode_length', step * self.cfg.action_repeat / episode)
+            log('episode', self.global_episode)
+            log('step', self.global_step)
+
+        # Store data in values
+        buffer_path = os.path.join(self.work_dir, 'buffer')
+        os.rename(buffer_path, f'constraint_{self.cfg.agent.name}_{self.cfg.snapshot_ts}')
+        domain, _ = self.cfg.task.split('_', 1)
+        source_path = os.path.join(self.work_dir, f'{self.cfg.agent.name}_{self.cfg.snapshot_ts}')
+
+    def skill_constraint_sum(self, source_path):
+        files = os.listdir(source_path)
+        skill_nums = [x for x in range(self.cfg.skill_dim)]
+        skill_sum = [0 for _ in range(self.cfg.skill_dim)]
+        skill_count = [0 for _ in range(self.cfg.skill_dim)]
+        for file in files:
+            path = os.path.join(source_path, file)
+            ep = np.load(path)
+            skill = np.where(ep['skill'][0] == 1)
+            constraint = np.sum(ep['constraint'])
+            skill_sum[skill[0][0]] += constraint
+            skill_count[skill[0][0]] += 1
+
+        def _divide(sum, count):
+            try:
+                return sum/count
+            except ZeroDivisionError:
+                return 0
+
+        return [_divide(sum, count) for (sum, count) in zip(skill_sum, skill_count)]
+
+    def skill_reward_sum(self, source_path):
+        files = os.listdir(source_path)
+        skill_nums = [x for x in range(self.cfg.skill_dim)]
+        skill_sum = [0 for _ in range(self.cfg.skill_dim)]
+        skill_count = [0 for _ in range(self.cfg.skill_dim)]
+        for file in files:
+            path = os.path.join(source_path, file)
+            ep = np.load(path)
+            skill = np.where(ep['skill'][0] == 1)
+            reward = np.sum(ep['reward'])
+            skill_sum[skill[0][0]] += reward
+            skill_count[skill[0][0]] += 1
+
+        def _divide(sum, count):
+            try:
+                return sum/count
+            except ZeroDivisionError:
+                return -100
+
+        return [_divide(sum, count) for (sum, count) in zip(skill_sum, skill_count)]
     
     def load_snapshot(self):
         snapshot_base_dir = Path(self.cfg.snapshot_base_dir)
@@ -239,9 +398,9 @@ class Workspace:
                 return payload
         return None
 
-@hydra.main(config_path='configs/.', config_name='sampling')
+@hydra.main(config_path='configs/.', config_name='prioritized_sampling')
 def main(cfg):
-    from sampling import Workspace as W
+    from prioritized_sampling import Workspace as W
     workspace = W(cfg)
     workspace.sample()
 

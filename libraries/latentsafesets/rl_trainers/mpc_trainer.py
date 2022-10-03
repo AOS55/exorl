@@ -20,7 +20,8 @@ class MPCTrainer(Trainer):
 
         self.trainers = []
 
-        self.trainers.append(VAETrainer(cfg, modules['enc'], loss_plotter))
+        if self.cfg.obs_type == 'pixels':
+            self.trainers.append(VAETrainer(cfg, modules['enc'], loss_plotter))
         self.trainers.append(PETSDynamicsTrainer(cfg, modules['dyn'], loss_plotter))
         self.trainers.append(ValueTrainer(env, cfg, modules['val'], loss_plotter))
         self.trainers.append(SafeSetTrainer(env, cfg, modules['ss'], loss_plotter))
