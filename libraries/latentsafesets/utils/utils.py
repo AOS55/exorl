@@ -123,10 +123,12 @@ def transform_dict(trajectories):
     dict_keys = list(trajectories[0].keys())
     if 'skill' in dict_keys:
         dict_keys.remove('skill')
+    if 'discount' in dict_keys:
+        dict_keys.remove('discount')
     new_trajectories = []
     for trajectory in trajectories:
         new_trajectory = []
-        for idx in range(len(trajectory[dict_keys[0]])):
+        for idx in range(len(trajectory[dict_keys[0]]) - 1):
             new_dict = {}
             for key in dict_keys:
                 if key == 'observation':
@@ -137,14 +139,18 @@ def transform_dict(trajectories):
                 new_dict['next_obs'] = trajectory['observation'][idx+1]
             else: 
                 new_dict['next_obs'] = trajectory['observation'][idx]
-            if 'safe_set' not in dict_keys:
-                if 1 in trajectory['reward']:
-                    new_dict['safe_set'] = 1
-                else:
-                    new_dict['safe_set'] = 0
             if 'on_policy' not in dict_keys:
                 new_dict['on_policy'] = 0
             new_trajectory.append(new_dict)
+        rtg = 0
+        in_ss = 0
+        if 'safe_set' and 'rtg' not in dict_keys:
+            for traj in reversed(new_trajectory):
+                if traj['reward'] > -1:
+                    in_ss = 1
+                traj['safe_set'] = in_ss
+                traj['rtg'] = rtg
+                rtg = rtg + traj['reward']
         new_trajectories.append(new_trajectory)
     return new_trajectories
 
