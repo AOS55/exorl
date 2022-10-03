@@ -10,7 +10,7 @@ obs_type: states  # [states, pixels]
 frame_stack: 1
 action_repeat: 1
 discount: 1.0
-num_updates: 25
+num_updates: 100
 log_freq: 100
 plot_freq: 500
 log_dir: ./logs
