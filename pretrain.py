@@ -64,9 +64,9 @@ class Workspace:
             task = PRIMAL_TASKS[self.cfg.domain]
 
         self.train_env = make(task, cfg.obs_type, cfg.frame_stack,
-                              cfg.action_repeat, cfg.seed)
+                              cfg.action_repeat, cfg.seed, cfg.random_start)
         self.eval_env = make(task, cfg.obs_type, cfg.frame_stack,
-                             cfg.action_repeat, cfg.seed)
+                             cfg.action_repeat, cfg.seed, cfg.random_start)
         print(f"obs_type: {cfg.obs_type}")
         print(f"obs_spec: {self.train_env.observation_spec()}")
         print(f"action_spec: {self.train_env.action_spec()}")
@@ -141,7 +141,6 @@ class Workspace:
             self.video_recorder.init(self.eval_env, enabled=(episode == 0))
             while not time_step.last():
                 with torch.no_grad(), utils.eval_mode(self.agent):
-                    print(f'time_step.observation: {time_step.observation}')
                     action = self.agent.act(time_step.observation,
                                             meta,
                                             self.global_step,
