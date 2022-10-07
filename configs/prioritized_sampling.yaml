@@ -33,7 +33,7 @@ update_encoder: false # can be either true or false depending if we want to fine
 # misc
 seed: 1
 device: cuda
-save_video: false
+save_video: true
 save_train_video: false
 save_to_data: true
 use_tb: false

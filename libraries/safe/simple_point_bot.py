@@ -35,7 +35,8 @@ class SimplePointBot(Env, utils.EzPickle):
                  horizon=100,
                  constr_penalty=-100,
                  goal_thresh=3,
-                 noise_scale=0.125):
+                 noise_scale=0.125,
+                 random_reset=False):
         utils.EzPickle.__init__(self)
         self.done = self.state = None
         self.horizon = horizon
@@ -43,6 +44,7 @@ class SimplePointBot(Env, utils.EzPickle):
         self.end_pos = end_pos
         self.goal_thresh = goal_thresh
         self.noise_scale = noise_scale
+        self.random_reset = random_reset
         self.constr_penalty = constr_penalty
         self.action_space = Box(-np.ones(2) * MAX_FORCE,
                                 np.ones(2) * MAX_FORCE)
@@ -84,7 +86,7 @@ class SimplePointBot(Env, utils.EzPickle):
         }
 
     def reset(self, random_start=False):
-        if random_start:
+        if random_start or self.random_reset:
             self.state = np.random.random(2) * (WINDOW_WIDTH, WINDOW_HEIGHT)
             if self.obstacle(self.state):
                 self.reset(True)

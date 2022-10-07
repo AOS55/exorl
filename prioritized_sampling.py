@@ -45,15 +45,13 @@ class Workspace:
                              use_wandb=cfg.use_wandb)
 
         # create env
-        self.train_env = make(cfg.task, cfg.obs_type, cfg.frame_stack,
-                                  cfg.action_repeat, cfg.seed)
         self.sample_env = make(cfg.task, cfg.obs_type, cfg.frame_stack,
-                                  cfg.action_repeat, cfg.seed)
+                                  cfg.action_repeat, cfg.seed, random_start=True)
 
         # create agent
         self.agent = make_agent(cfg.obs_type,
-                                self.train_env.observation_spec(),
-                                self.train_env.action_spec(),
+                                self.sample_env.observation_spec(),
+                                self.sample_env.action_spec(),
                                 cfg.num_seed_frames // cfg.action_repeat,
                                 cfg.agent)
 
@@ -78,8 +76,8 @@ class Workspace:
                 self.meta_encoded = False
 
         # create replay buffer
-        data_specs = (self.train_env.observation_spec(),
-                      self.train_env.action_spec(),
+        data_specs = (self.sample_env.observation_spec(),
+                      self.sample_env.action_spec(),
                       specs.Array((1,), np.float32, 'reward'),
                       specs.Array((1,), np.float32, 'discount'))
 
@@ -138,9 +136,11 @@ class Workspace:
 
         self.replay_storage.add(time_step, meta)
         while sample_until_step(episode):
+
+            # Random Start
             time_step = self.sample_env.reset()
             if self.cfg.agent.name not in self.prior_encoded_agents:
-                # Update agent if not in the reward      
+                # Update agent if not in the reward 
                 meta = self.agent.update_meta(meta, self.global_step, time_step)
                 self.sample_env._env._env._env._env.environment.reset(random_start=False)
             else:
@@ -198,16 +198,18 @@ class Workspace:
         # Sample from skill
         norm_skill_reward = np.array(self.skill_reward_sum(source_path))
         norm_skill_constraint = np.array(self.skill_constraint_sum(source_path))
-        print(norm_skill_reward)
-        print(norm_skill_constraint)
+        print(f'reward: {norm_skill_reward}')
+        print(f'constraint: {norm_skill_constraint}')
 
         reward_skills = np.where(norm_skill_reward > -100.0)[0]
         constraint_skills = np.where(norm_skill_constraint > 0.0)[0]
         print(f'reward_skills: {reward_skills}')
         print(f'constraint_skills: {constraint_skills}')
         
+        """
+        Sample from reward priors
+        """
         os.makedirs(os.path.join(self.work_dir, 'buffer'))
-        # sample from reward priors
         step, episode, total_reward = 0, 0, 0
         while prioritize_sample_until_step(episode):
             time_step = self.sample_env.reset()
@@ -265,10 +267,14 @@ class Workspace:
         domain, _ = self.cfg.task.split('_', 1)
         source_path = os.path.join(self.work_dir, f'{self.cfg.agent.name}_{self.cfg.snapshot_ts}')
         
+        """
+        Sample from Constraint Priors
+        """
+
         os.makedirs(os.path.join(self.work_dir, 'buffer'))
-        # sample from constraint priors
         step, episode, total_reward = 0, 0, 0
         while prioritize_sample_until_step(episode):
+            # for constraints randomly sample to get a better idea of how each works
             time_step = self.sample_env.reset()
             skill = np.zeros(self.cfg.skill_dim, dtype=np.float32)
             skill[np.random.choice(constraint_skills)] = 1.0
@@ -289,7 +295,6 @@ class Workspace:
                 trajectory.append(time_step)
                 step += 1
                 self._global_step += 1
-                
                 if self.cfg.data_type == 'unsupervised':
                     # TODO: Provide a less hacky way of accessing info from environment
                     info = self.sample_env._env._env._env._env.get_info()
