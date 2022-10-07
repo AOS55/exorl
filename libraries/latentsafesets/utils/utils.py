@@ -128,7 +128,7 @@ def transform_dict(trajectories):
     new_trajectories = []
     for trajectory in trajectories:
         new_trajectory = []
-        for idx in range(len(trajectory[dict_keys[0]]) - 1):
+        for idx in range(len(trajectory[dict_keys[0]])):
             new_dict = {}
             for key in dict_keys:
                 if key == 'observation':
