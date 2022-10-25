@@ -10,7 +10,7 @@ obs_type: states  # [states, pixels]
 frame_stack: 1
 action_repeat: 1
 discount: 1.0
-num_updates: 100
+num_updates: 500
 log_freq: 100
 plot_freq: 500
 log_dir: ./logs
@@ -97,8 +97,8 @@ constr_hidden_size: 200
 constr_lr: 1e-4
 
 # Replay Buffer
-data_dirs: datasets/states/SimplePointBot/controller/SimplePointBot
-data_counts: 200
+data_dirs: datasets/states/SimplePointBot/controller/prioritized_sampling_1000_1200_50000
+data_counts: 600
 buffer_size: 35000
 
 # Misc Settings
