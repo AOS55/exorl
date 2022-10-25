@@ -3,7 +3,7 @@ _target_: agents.unsupervised_learning.SMMAgent
 name: smm
 
 # z params
-z_dim: 4 # default in codebase is 4
+z_dim: ${skill_dim} # default in codebase is 4
 
 # z discriminator params
 sp_lr: 1e-3
