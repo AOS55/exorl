@@ -60,6 +60,7 @@ class Workspace:
         if cfg.snapshot_ts > 0:
             print(f'snapshot is: {self.load_snapshot()}')
             pretrained_agent = self.load_snapshot()['agent']
+            print(f'pretrained_agent: {pretrained_agent}')
             self.agent.init_from(pretrained_agent)
 
         self.prior_encoded_agents = ['aps', 'diayn', 'smm']
