@@ -207,6 +207,7 @@ class SimplePointBot(Env, utils.EzPickle):
 
         ax.set_aspect('equal')
         ax.autoscale_view()
+        ax.invert_yaxis()
 
         if file is not None:
             plt.savefig(file)
@@ -260,6 +261,7 @@ class SimplePointBot(Env, utils.EzPickle):
         ax.add_patch(circle)
         ax.annotate("start", xy=(self.start_pos[0], self.start_pos[1] - 8), fontsize=10, ha="center")
         ax.annotate("goal", xy=(self.end_pos[0], self.end_pos[1] - 8), fontsize=10, ha="center")
+        ax.invert_yaxis()
 
 
 class SimplePointBotLong(SimplePointBot):
