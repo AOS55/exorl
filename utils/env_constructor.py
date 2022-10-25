@@ -21,7 +21,8 @@ ENV_TYPES = {
     'BipedalWalker-v3': 'gym',
     'CarRacing-v2': 'gym',
     'LunarLander-v2': 'gym',
-    'SimplePointBot': 'safe'
+    'SimplePointBot': 'safe',
+    'SimpleVelocityBot': 'safe'
 }
 
 class ExtendedTimeStep(NamedTuple):
