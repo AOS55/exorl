@@ -11,7 +11,7 @@ frame_stack: 1 # only works if obs_type=pixels
 action_repeat: 1 # set to 2 for pixels
 skill_dim: 10
 discount: 0.99
-random_start: true
+random_start: false
 # train settings
 num_train_frames: 2000010
 num_seed_frames: 4000
@@ -20,7 +20,7 @@ eval_every_frames: 10000
 num_eval_episodes: 10
 # snapshot
 snapshots: [10000, 50000, 100000, 500000, 1000000, 1500000, 2000000]
-snapshot_dir: ../../../data/models/${obs_type}/${domain}/${agent.name}/random_start/${skill_dim}/${seed}
+snapshot_dir: ../../../data/models/${obs_type}/${domain}/${agent.name}/${skill_dim}/${seed}
 # replay buffer
 replay_buffer_size: 1000000
 replay_buffer_num_workers: 4
