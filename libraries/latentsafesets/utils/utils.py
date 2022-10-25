@@ -119,16 +119,20 @@ def load_trajectories(num_traj, file):
 
 
 def transform_dict(trajectories):
-    # Covert dictionary of lists to list of dictionaries
-    dict_keys = list(trajectories[0].keys())
-    if 'skill' in dict_keys:
-        dict_keys.remove('skill')
-    if 'discount' in dict_keys:
-        dict_keys.remove('discount')
+    # Convert dictionary of lists to list of dictionaries
     new_trajectories = []
     for trajectory in trajectories:
         new_trajectory = []
-        for idx in range(len(trajectory[dict_keys[0]])):
+        # Get rid of keys that we don't need
+        dict_keys = list(trajectory.keys())
+        if 'skill' in dict_keys:
+            dict_keys.remove('skill')
+        if 'z' in dict_keys:
+            dict_keys.remove('z')
+        if 'discount' in dict_keys:
+            dict_keys.remove('discount')
+        # TODO: Work out how the length of the trajectory needs to be reduced
+        for idx in range(len(trajectory[dict_keys[0]])-1):
             new_dict = {}
             for key in dict_keys:
                 if key == 'observation':
@@ -151,6 +155,10 @@ def transform_dict(trajectories):
                 traj['safe_set'] = in_ss
                 traj['rtg'] = rtg
                 rtg = rtg + traj['reward']
+        
+        if new_trajectory[-1]['done'] != 1:
+            new_trajectory[-1]['done'] = 1
+        
         new_trajectories.append(new_trajectory)
     return new_trajectories
 
