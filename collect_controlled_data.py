@@ -50,7 +50,7 @@ DATA_DIRS = {
 
 DATA_COUNTS = {
     'SimplePointBot' : [
-        100, 100
+        150, 150
     ],
     'SimpleVeocityBot' : [
         100, 100
