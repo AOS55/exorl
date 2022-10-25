@@ -6,7 +6,7 @@ defaults:
 # env settings
 env: SimplePointBot
 obs_type: states
-num_samples: 100
+num_samples: 150
 frame_stack: 1
 action_repeat: 1
 seed: 1
