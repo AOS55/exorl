@@ -176,7 +176,10 @@ class Workspace:
 
                 rtg = rtg + transition['reward']
 
-            print(f'transition.keys(): {transition.keys()}')
+            print(f'all_rewards: {sum([sum(rewards[-26:-1]) for rewards in all_rewards]) / 25}')
+            if idx+1 % 25 == 0:
+                self.replay_buffer = utils.load_replay_buffer(self.cfg, None)
+
             self.replay_buffer.store_transitions(transitions)
             update_rewards.append(traj_reward)
 
