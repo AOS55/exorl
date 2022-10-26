@@ -9,7 +9,7 @@ from dm_control.suite.wrappers import action_scale, pixels
 from dm_env import StepType, specs
 
 import libraries.dmc as cdmc
-from libraries.safe import SimplePointBot as SPB
+from libraries.safe import SimplePointBot, SimpleVelocityBot
 from .wrappers import GymWrapper
 from .wrappers import FrameStack
 
@@ -23,6 +23,11 @@ ENV_TYPES = {
     'LunarLander-v2': 'gym',
     'SimplePointBot': 'safe',
     'SimpleVelocityBot': 'safe'
+}
+
+SAFE_ENVS = {
+    'SimplePointBot': SimplePointBot,
+    'SimpleVelocityBot': SimpleVelocityBot
 }
 
 class ExtendedTimeStep(NamedTuple):
@@ -323,11 +328,11 @@ def _make_gym(obs_type, domain, task, frame_stack, action_repeat, seed, random_s
 def _make_custom(obs_type, domain, task, frame_stack, action_repeat, seed, random_start=False):
     if obs_type == 'states':
         from_pixels = False
-        env = SPB(from_pixels=from_pixels, random_reset=random_start)
+        env = SAFE_ENVS[domain](from_pixels=from_pixels, random_reset=random_start)
         env = GymWrapper(env)
     else:
         from_pixels = True
-        env = SPB(from_pixels=from_pixels, random_reset=random_start)
+        env = SAFE_ENVS[domain](from_pixels=from_pixels, random_reset=random_start)
         env = FrameStack(env, num_stack=frame_stack)
         env = GymWrapper(env)
     env = ActionDTypeWrapper(env, np.float32)

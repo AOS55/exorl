@@ -4,8 +4,8 @@ defaults:
 
 
 # Task Settings
-task: SimplePointBot_goal
-env: SimplePointBot
+task: SimpleVelocityBot_goal
+env: SimpleVelocityBot
 obs_type: states  # [states, pixels]
 frame_stack: 1
 action_repeat: 1
@@ -97,7 +97,7 @@ constr_hidden_size: 200
 constr_lr: 1e-4
 
 # Replay Buffer
-data_dirs: datasets/states/SimplePointBot/controller/prioritized_sampling_1000_1200_50000
+data_dirs: datasets/states/SimpleVelocityBot/controller/prioritized_sampling_1200
 data_counts: 600
 buffer_size: 35000
 

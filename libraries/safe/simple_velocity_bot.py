@@ -36,7 +36,8 @@ class SimpleVelocityBot(Env, utils.EzPickle):
                  horizon=150,
                  constr_penalty=-100,
                  goal_thresh=10.0,
-                 noise_scale=0.125):
+                 noise_scale=0.125,
+                 random_reset=False):
         utils.EzPickle.__init__(self)
         self.done = self.state = None
         self.horizon = horizon
@@ -44,6 +45,7 @@ class SimpleVelocityBot(Env, utils.EzPickle):
         self.end_pos = end_pos
         self.goal_thresh = goal_thresh
         self.noise_scale = noise_scale
+        self.random_reset = random_reset
         self.constr_penalty = constr_penalty
         self.action_space = Box(-np.ones(2) * MAX_ACCEL,
                                 np.ones(2) * MAX_ACCEL)
@@ -74,18 +76,19 @@ class SimpleVelocityBot(Env, utils.EzPickle):
         if self._from_pixels:
             obs = self._state_to_image(self.state)
         else:
-            obs = self.state
+            obs = self.state.astype(dtype=np.float32)
         return obs, cur_reward, self.done, {
             "constraint": constr,
             "reward": cur_reward,
             "state": old_state,
             "next_state": next_state,
-            "action": a
+            "action": a, 
+            "done": self.done
         }
 
     def reset(self, random_start=False):
         self.state = np.ones(4)  # Preallocate with 4 values
-        if random_start:
+        if random_start or self.random_reset:
             self.state[:2] = np.random.random(2) * (WINDOW_WIDTH, WINDOW_HEIGHT)
             self.state[2:] = np.random.uniform(low=-MAX_START_VEL, high=MAX_START_VEL, size=2)
             if self.obstacle(self.state[:2]):
@@ -98,11 +101,11 @@ class SimpleVelocityBot(Env, utils.EzPickle):
         if self._from_pixels:
             obs = self._state_to_image(self.state)
         else:
-            obs = self.state
+            obs = self.state.astype(dtype=np.float32)
         return obs
 
     def render(self, mode='human'):
-        return self._draw_state(self.state)
+        return self._draw_state(self.state[:2])
 
     def _draw_state(self, state):
         BCKGRND_COLOR = (0, 0, 0)
