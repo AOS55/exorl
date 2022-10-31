@@ -141,7 +141,6 @@ class Workspace:
             self.video_recorder.init(self.eval_env, enabled=(episode == 0))
             while not time_step.last():
                 with torch.no_grad(), utils.eval_mode(self.agent):
-                    print(f'time_step.observation: {time_step.observation}')
                     action = self.agent.act(time_step.observation,
                                             meta,
                                             self.global_step,
