@@ -12,3 +12,4 @@ libraries/gym
 *outputs
 models/
 *.log
+*.out
