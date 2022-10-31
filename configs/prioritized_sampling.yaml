@@ -10,16 +10,16 @@ obs_type: states # [states, pixels]
 frame_stack: 1 # only works if obs_type=pixels
 action_repeat: 1 # set to 2 for pixels
 discount: 0.99
-skill_dim: 500
+skill_dim: 4
 random_start: true
 # train settings
 num_seed_frames: 4000
 # sample settings
-num_sample_episodes: 50000
-num_prioritize_sample_episodes: 1200
+num_sample_episodes: 5000
+num_prioritize_sample_episodes: 600
 data_type: unsupervised  # either offline_rl or unsupervised changes the data collected from the environment
 # pretrained
-snapshot_ts: 500000
+snapshot_ts: 1000000
 snapshot_base_dir: ./../../../data/models/
 # replay buffer
 replay_buffer_size: 1000000

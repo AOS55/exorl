@@ -9,11 +9,12 @@ domain: walker # primal task will be inferred in runtime
 obs_type: states # [states, pixels]
 frame_stack: 1 # only works if obs_type=pixels
 action_repeat: 1 # set to 2 for pixels
+
 skill_dim: 10
 discount: 0.99
 random_start: false
 # train settings
-num_train_frames: 2000010
+num_train_frames: 2000100
 num_seed_frames: 4000
 # eval
 eval_every_frames: 10000
