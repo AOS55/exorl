@@ -14,5 +14,5 @@ def write_models_to_s3(root_dir='data/models'):
     return output, error
 
 if __name__=='__main__':
-    write_data_to_s3()
+    # write_data_to_s3()
     write_models_to_s3()
