@@ -10,6 +10,7 @@ from dm_env import StepType, specs
 
 import libraries.dmc as cdmc
 from libraries.safe import SimplePointBot, SimpleVelocityBot
+from libraries.safe.dmc import ant_obstacle
 from .wrappers import GymWrapper
 from .wrappers import FrameStack
 
@@ -22,7 +23,8 @@ ENV_TYPES = {
     'CarRacing-v2': 'gym',
     'LunarLander-v2': 'gym',
     'SimplePointBot': 'safe',
-    'SimpleVelocityBot': 'safe'
+    'SimpleVelocityBot': 'safe',
+    'ant_obstacle': 'dmc'
 }
 
 SAFE_ENVS = {

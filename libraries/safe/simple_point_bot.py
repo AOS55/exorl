@@ -72,6 +72,11 @@ class SimplePointBot(Env, utils.EzPickle):
         constr = self.obstacle(next_state)
         self.done = self._episode_steps >= self.horizon
 
+        # Terminate episode if we hit the wall
+        if 0+1 >= self.state[0] or self.state[0] >= WINDOW_WIDTH-1:
+            self.done = True
+        if 0+1 >= self.state[1] or self.state[1] >= WINDOW_HEIGHT-1:
+            self.done = True
         if self._from_pixels:
             obs = self._state_to_image(self.state)
         else:

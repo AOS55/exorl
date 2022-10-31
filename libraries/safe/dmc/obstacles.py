@@ -10,7 +10,7 @@ import numpy as np
 
 _GROUNDPLANE_QUAD_SIZE = 0.25
 _TOP_CAMERA_DISTANCE = 7.0
-_TOP_CAMERA_Y_PADDING_FACTOR = 2.2
+_TOP_CAMERA_Y_PADDING_FACTOR = 2.5
 
 
 class Obstacle(composer.Arena):
@@ -19,7 +19,7 @@ class Obstacle(composer.Arena):
         super()._build(name=name)
 
         self._aesthetic = 'outdoor_natural'
-        self._size = size
+        self.size = size
 
         sky_info = locomotion_arenas_assets.get_sky_texture_info(self._aesthetic)
 
@@ -55,27 +55,71 @@ class Obstacle(composer.Arena):
             pos = [0, 0, 0]
         )
 
-        #TODO: Work out why the ground doesn't render correctly
+        #TODO: Work out why the ground doesn't render correctly 
         ground_size = max(size)
         top_camera_fovy = (360 / np.pi) * np.arctan2(
             _TOP_CAMERA_Y_PADDING_FACTOR * ground_size / 2,
             _TOP_CAMERA_DISTANCE)
-        print(f'top_camera_distance: {_TOP_CAMERA_DISTANCE}')
         self._top_camera = self._mjcf_root.worldbody.add(
             'camera',
             name='top_camera',
             pos=[0, 0, _TOP_CAMERA_DISTANCE],
             zaxis=[0, 0, 1],
-            fovy = top_camera_fovy
+            fovy=top_camera_fovy
+        )
+        
+        self._obstacle = self._mjcf_root.worldbody.add(
+            'geom',
+            type='box',
+            name='box_obstacle',
+            size=[2.0, 2.0, 0.5],
+            rgba=[1, 0, 0, 1],
+            pos = [0.5, 0, 0]
         )
 
-        self._obstacle = self._mjcf_root.worldbody.add(
-            'site',
-            name='obstacle',
+        self._wall_height = 1.0
+        self._wall_thickness = 0.5
+        self._wall_colour = [0, 0, 0, 0.0]
+        self._wall_left = self._mjcf_root.worldbody.add(
+            'geom',
             type='box',
-            pos=(0., 0., 0.),
-            size=(1.0, 2.0, 2.0),
-            rgba=(1.0, 0.0, 0.0, 1.0)
+            name='wall_left',
+            size=[self._wall_thickness, size[1], self._wall_height],
+            rgba=self._wall_colour,
+            pos=[size[0], 0.0, 0.0]
+        )
+        self._wall_right = self._mjcf_root.worldbody.add(
+            'geom',
+            type='box',
+            name='wall_right',
+            size=[self._wall_thickness, size[1], self._wall_height],
+            rgba=self._wall_colour,
+            pos=[-size[0], 0.0, 0.0]
+        )
+        self._wall_front = self._mjcf_root.worldbody.add(
+            'geom',
+            type='box',
+            name='wall_front',
+            size=[size[0], self._wall_thickness, self._wall_height],
+            rgba=self._wall_colour,
+            pos=[0.0, size[1], 0.0]
+        )
+        self._wall_back = self._mjcf_root.worldbody.add(
+            'geom',
+            type='box',
+            name='wall_back',
+            size=[size[0], self._wall_thickness, self._wall_height],
+            rgba=self._wall_colour,
+            pos=[0.0, -size[1], 0.0]
+        )
+
+        self._objective = self._mjcf_root.worldbody.add(
+            'geom',
+            type='sphere',
+            name='goal_position',
+            size=[0.7],
+            rgba=[0, 0, 1, 1],
+            pos=[-5.0, 0.0, 0.0]
         )
 
     def _build_observables(self):
@@ -88,10 +132,6 @@ class Obstacle(composer.Arena):
     @property
     def top_camera(self):
         return self._top_camera
-
-    @property
-    def size(self):
-        return self._size
 
     def regenerate(self, random_state):
         pass
