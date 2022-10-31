@@ -129,7 +129,24 @@ class Workspace:
         if self._replay_iter is None:
             self._replay_iter = iter(self.replay_loader)
         return self._replay_iter
-    
+
+    def sample(self):
+        sample_until_step = utils.Until(self.cfg.num_sample_episodes)
+        prioritize_sample_until_step = utils.Until(self.cfg.num_prioritize_sample_episodes)
+        seed_until_step = utils.Until(self.cfg.num_seed_frames, self.cfg.action_repeat)
+        
+        # random start samples
+        random_start_path = self.generate_samples(self.random_sample_env, sample_until_step=sample_until_step, seed_until_step=seed_until_step, sampling_name='random_sample')
+        constraint_path = self.make_constraint_dir(random_start_path, 'constraints')  # make constraint dir
+        os.makedirs(os.path.join(self.work_dir, 'buffer'))
+        start_path = self.generate_samples(self.sample_env, sample_until_step=sample_until_step, seed_until_step=seed_until_step, sampling_name='sample')
+        norm_skill_reward = np.array(self.skill_reward_sum(start_path))
+        print(f'normalized_skill_reward: {norm_skill_reward}')
+        reward_skill_set = np.where(norm_skill_reward > -0.985)[0]
+        os.makedirs(os.path.join(self.work_dir, 'buffer'))
+        reward_path = self.generate_samples(self.sample_env, sample_until_step=prioritize_sample_until_step, seed_until_step=seed_until_step, sampling_name='rewards', skill_set=reward_skill_set)
+        self.make_training_set(reward_path, constraint_path)
+
     def generate_samples(self, env, sample_until_step, seed_until_step, sampling_name=None, skill_set=None):
         # Sample based on input and mode
 
@@ -144,7 +161,7 @@ class Workspace:
                 skill = np.zeros(self.cfg.skill_dim, dtype=np.float32)
                 skill[np.random.choice(skill_set)] = 1.0
                 meta = OrderedDict()
-                meta['skill'] = skill
+                meta[self.skill_key] = skill
             else:
                 meta = self.agent.init_meta()
 
@@ -200,22 +217,6 @@ class Workspace:
         
         return source_path
 
-    def sample(self):
-        sample_until_step = utils.Until(self.cfg.num_sample_episodes)
-        prioritize_sample_until_step = utils.Until(self.cfg.num_prioritize_sample_episodes)
-        seed_until_step = utils.Until(self.cfg.num_seed_frames, self.cfg.action_repeat)
-        
-        # random start samples
-        random_start_path = self.generate_samples(self.random_sample_env, sample_until_step=sample_until_step, seed_until_step=seed_until_step, sampling_name='random_sample')
-        constraint_path = self.make_constraint_dir(random_start_path, 'constraints')  # make constraint dir
-        os.makedirs(os.path.join(self.work_dir, 'buffer'))
-        start_path = self.generate_samples(self.sample_env, sample_until_step=sample_until_step, seed_until_step=seed_until_step, sampling_name='sample')
-        norm_skill_reward = np.array(self.skill_reward_sum(start_path))
-        reward_skill_set = np.where(norm_skill_reward > -100.0)[0]
-        os.makedirs(os.path.join(self.work_dir, 'buffer'))
-        reward_path = self.generate_samples(self.sample_env, sample_until_step=prioritize_sample_until_step, seed_until_step=seed_until_step, sampling_name='rewards', skill_set=reward_skill_set)
-        self.make_training_set(reward_path, constraint_path)
-
     def make_training_set(self, reward_source_path, constraint_source_path, target_dir='mpc_train'):
         idfile = 0
         target_path = os.path.join(self.work_dir, target_dir)
@@ -267,7 +268,7 @@ class Workspace:
             ep = np.load(path)
             skill = np.where(ep[self.skill_key][0] == 1)
             reward = np.sum(ep['reward'])
-            skill_sum[skill[0][0]] += reward
+            skill_sum[skill[0][0]] += reward/len(ep['reward'])
             skill_count[skill[0][0]] += 1
         
         def _divide(sum, count):

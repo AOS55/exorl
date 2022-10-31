@@ -1,4 +1,4 @@
-from libraries.safe.dmc import ant
+from libraries.safe.dmc import ant_obstacle
 
 import os
 import numpy as np
@@ -16,14 +16,13 @@ def cameras(env):
 
 def main():
 
-    env = ant.make(task='navigate')
+    env = ant_obstacle.make(task='navigate')
 
     out = env.reset()
     while out.step_type != 2:
         action = np.random.random(8)
         action = np.zeros(8)
         out = env.step(action)
-        print(out)
     pixel_image = cameras(env)
     pixel_image.save("obstacle_image.jpg")
 

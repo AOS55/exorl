@@ -279,8 +279,7 @@ class SMMAgent(DDPGAgent):
 
             if self.obs_type=='pixels':
                 # p^*(s) is ignored, as state space dimension is inaccessible from pixel input
-                intr_reward = pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach(
-                )
+                intr_reward = pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
                 reward = intr_reward
             else:
                 # p^*(s) is based on the goal hitting time
