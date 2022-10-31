@@ -167,6 +167,8 @@ class Workspace:
                                       self.cfg.action_repeat)
         eval_every_step = utils.Every(self.cfg.eval_every_frames,
                                       self.cfg.action_repeat)
+        snapshots = self.cfg.snapshots.copy()
+        snapshot = snapshots[0]
 
         episode_step, episode_reward = 0, 0
         time_step = self.train_env.reset()
@@ -199,8 +201,10 @@ class Workspace:
                 self.replay_storage.add(time_step, meta)
                 self.train_video_recorder.init(time_step.observation)
                 # try to save snapshot
-                if self.global_frame in self.cfg.snapshots:
+                if self.global_frame > snapshot:
                     self.save_snapshot()
+                    snapshots = snapshots[1:]
+                    snapshot = snapshots[0]
                 episode_step = 0
                 episode_reward = 0
 
