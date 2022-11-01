@@ -159,8 +159,7 @@ class SMMAgent(DDPGAgent):
         
         self.goal = (150, 75)  # TODO: Fix as part of config
         self.pred_optimizer = torch.optim.Adam(self.smm.z_pred_net.parameters(), lr=sp_lr)
-        self.vae_optimizer = torch.optim.Adam(self.smm.vae.parameters(),
-                                              lr=vae_lr)
+        self.vae_optimizer = torch.optim.Adam(self.smm.vae.parameters(), lr=vae_lr)
 
         self.smm.train()
 
