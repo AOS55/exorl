@@ -168,7 +168,7 @@ class Workspace:
             # p_star
             reward_dir = os.path.join(self.work_dir, str(self.global_episode))
             os.makedirs(reward_dir)
-            p_reward_func = lambda x: 0.5 * np.log(self.agent.get_goal_p_star(x))
+            p_reward_func = lambda x: 100.0 * np.log(self.agent.get_goal_p_star(x))
             self.plot_reward(reward_func=p_reward_func, env=self.eval_env, file=os.path.join(reward_dir, 'p_star.png'), z_prior=False)
             
             # pred_log
@@ -207,7 +207,7 @@ class Workspace:
                 h_z_reward = h_z_func(z)
                 h_z_reward = h_z_reward.to(self.device)
                 # print(f'p_reward.shape: {p_reward.shape}, pred_log_reward.shape: {pred_log_reward.shape}, h_z_s_reward.shape: {h_z_s_reward.shape}, h_z_reward.shape: {h_z_reward.shape}')
-                int_reward = p_reward + pred_log_reward + h_z_s_reward + h_z_reward
+                int_reward = -p_reward + pred_log_reward + h_z_s_reward + h_z_reward
                 return int_reward
 
             self.plot_reward(reward_func=intrinsic_reward, env=self.eval_env, file=os.path.join(reward_dir, 'int_reward.png'), z_prior=True)
@@ -279,6 +279,7 @@ class Workspace:
             # try to update the agent
             if not seed_until_step(self.global_step):
                 metrics = self.agent.update(self.replay_iter, self.global_step)
+                # print(f'metrics: {metrics}')
                 self.logger.log_metrics(metrics, self.global_frame, ty='train')
 
             # take env step
@@ -328,7 +329,6 @@ class Workspace:
                     data[y, x] = reward_func(obs)
             if plot:
                 env.draw(heatmap=data, file=file, show=show)
-
 
 @hydra.main(config_path='configs/.', config_name='pretrain')
 def main(cfg):
