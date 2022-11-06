@@ -19,13 +19,13 @@ skill_dim: 10
 discount: 0.99
 random_start: false
 # train settings
-num_train_frames: 2000100
+num_train_frames: 4000100
 num_seed_frames: 4000
 # eval
-eval_every_frames: 10000
+eval_every_frames: 100000
 num_eval_episodes: 10
 # snapshot
-snapshots: [10000, 50000, 100000, 500000, 1000000, 1500000, 2000000]
+snapshots: [10000, 50000, 100000, 500000, 1000000, 1500000, 2000000, 3000000, 4000000]
 snapshot_dir: ../../../data/models/${obs_type}/${domain}/${agent.name}/${skill_dim}/${seed}
 # replay buffer
 replay_buffer_size: 1000000
