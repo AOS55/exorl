@@ -285,10 +285,10 @@ class SMMAgent(DDPGAgent):
                 # TODO: Assumes obs is just (x, y) at front
                 p_star = self.get_goal_p_star(obs)
                 log_p_star = np.log(p_star)
-                log_p_star = -100.0 * torch.tensor(log_p_star).to(self.device)
+                log_p_star = torch.tensor(log_p_star).to(self.device)
                 # TODO: Check signs in this intrinsic reward function, maybe ask author
                 # intr_reward = log_p_star + pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
-                intr_reward = pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
+                intr_reward = log_p_star + pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
                 # print(f'intr_reward: {intr_reward[0]} = p*: {100 * log_p_star[0]} + rho_pi: {pred_log_ratios[0]} +h(z): {self.latent_ent_coef * h_z[0]} + h(z|s): {self.latent_cond_ent_coef * h_z_s.detach()[0]}')
                 reward = intr_reward
         else:
