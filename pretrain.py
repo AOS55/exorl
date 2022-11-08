@@ -163,7 +163,7 @@ class Workspace:
             log('step', self.global_step)
 
         # Make Reward heatmap's for smm
-        if type(self.agent) == SMMAgent:
+        if type(self.agent) == SMMAgent and self.cfg.plot:
             
             # p_star
             reward_dir = os.path.join(self.work_dir, str(self.global_episode))
