@@ -142,7 +142,7 @@ class Workspace:
         start_path = self.generate_samples(self.sample_env, sample_until_step=sample_until_step, seed_until_step=seed_until_step, sampling_name='sample')
         norm_skill_reward = np.array(self.skill_reward_sum(start_path))
         print(f'normalized_skill_reward: {norm_skill_reward}')
-        reward_skill_set = np.where(norm_skill_reward > -0.985)[0]
+        reward_skill_set = np.where(norm_skill_reward > -0.95)[0]
         os.makedirs(os.path.join(self.work_dir, 'buffer'))
         reward_path = self.generate_samples(self.sample_env, sample_until_step=prioritize_sample_until_step, seed_until_step=seed_until_step, sampling_name='rewards', skill_set=reward_skill_set)
         self.make_training_set(reward_path, constraint_path)
@@ -268,7 +268,7 @@ class Workspace:
             ep = np.load(path)
             skill = np.where(ep[self.skill_key][0] == 1)
             reward = np.sum(ep['reward'])
-            skill_sum[skill[0][0]] += reward/len(ep['reward'])
+            skill_sum[skill[0][0]] += reward/(len(ep['reward'])-1)
             skill_count[skill[0][0]] += 1
         
         def _divide(sum, count):
