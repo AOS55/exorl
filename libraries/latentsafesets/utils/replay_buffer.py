@@ -14,13 +14,13 @@ class ReplayBuffer:
         self._index = 0
         self._len = 0
 
-    def store_transitions(self, transistions):
+    def store_transitions(self, transitions):
         """
         Stores transitions
         :param transistions: a list of dictionaries encoding transitions. Keys can be anything
         """
-        assert transistions[-1]['done'] > 0, "Last transition must be end of trajectory"
-        for transition in transistions:
+        assert transitions[-1]['done'] > 0, "Last transition must be end of trajectory"
+        for transition in transitions:
             self.store_transition(transition)
 
     def store_transition(self, transition):

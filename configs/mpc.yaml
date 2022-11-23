@@ -4,13 +4,13 @@ defaults:
 
 
 # Task Settings
-task: SimplePointBot_goal
-env: SimplePointBot
-obs_type: pixels  # [states, pixels]
+task: SimpleVelocityBot_goal
+env: SimpleVelocityBot
+obs_type: states  # [states, pixels]
 frame_stack: 1
 action_repeat: 1
 discount: 1.0
-num_updates: 25
+num_updates: 500
 log_freq: 100
 plot_freq: 500
 log_dir: ./logs
@@ -18,8 +18,8 @@ log_dir: ./logs
 # Module Settings
 # Encoder
 enc_checkpoint: ../../../models/spb/vae.pth
-d_latent: 32
-d_obs: [3, 64, 64]
+d_latent: 2
+d_obs: [2]
 enc_init_iters: 100000
 enc_kl_multiplier: 1e-6
 enc_data_aug: false
@@ -97,8 +97,8 @@ constr_hidden_size: 200
 constr_lr: 1e-4
 
 # Replay Buffer
-data_dirs: datasets/pixels/SimplePointBot/diayn/buffer
-data_counts: 1000
+data_dirs: datasets/states/SimpleVelocityBot/controller/prioritized_sampling_1200
+data_counts: 600
 buffer_size: 35000
 
 # Misc Settings

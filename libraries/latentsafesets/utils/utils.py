@@ -119,13 +119,19 @@ def load_trajectories(num_traj, file):
 
 
 def transform_dict(trajectories):
-    # Covert dictionary of lists to list of dictionaries
-    dict_keys = list(trajectories[0].keys())
-    if 'skill' in dict_keys:
-        dict_keys.remove('skill')
+    # Convert dictionary of lists to list of dictionaries
     new_trajectories = []
     for trajectory in trajectories:
         new_trajectory = []
+        # Get rid of keys that we don't need
+        dict_keys = list(trajectory.keys())
+        if 'skill' in dict_keys:
+            dict_keys.remove('skill')
+        if 'z' in dict_keys:
+            dict_keys.remove('z')
+        if 'discount' in dict_keys:
+            dict_keys.remove('discount')
+        # TODO: Work out how the length of the trajectory needs to be reduced
         for idx in range(len(trajectory[dict_keys[0]])-1):
             new_dict = {}
             for key in dict_keys:
@@ -133,13 +139,26 @@ def transform_dict(trajectories):
                     new_dict['obs'] = trajectory[key][idx]
                 else:
                     new_dict[key] = trajectory[key][idx]
-            new_dict['next_obs'] = trajectory['observation'][idx]
-            if 1 in trajectory['reward']:
-                new_dict['safe_set'] = 1
-            else:
-                new_dict['safe_set'] = 0
-            new_dict['on_policy'] = 0
+            if idx < len(trajectory[dict_keys[0]])-1:
+                new_dict['next_obs'] = trajectory['observation'][idx+1]
+            else: 
+                new_dict['next_obs'] = trajectory['observation'][idx]
+            if 'on_policy' not in dict_keys:
+                new_dict['on_policy'] = 0
             new_trajectory.append(new_dict)
+        rtg = 0
+        in_ss = 0
+        if 'safe_set' and 'rtg' not in dict_keys:
+            for traj in reversed(new_trajectory):
+                if traj['reward'] > -1:
+                    in_ss = 1
+                traj['safe_set'] = in_ss
+                traj['rtg'] = rtg
+                rtg = rtg + traj['reward']
+        
+        if new_trajectory[-1]['done'] != 1:
+            new_trajectory[-1]['done'] = 1
+        
         new_trajectories.append(new_trajectory)
     return new_trajectories
 
@@ -158,7 +177,6 @@ def load_replay_buffer(cfg, encoder=None, first_only=False):
             break
 
     log.info('Populating replay buffer')
-
     # Shuffle array so that when the replay fills up it doesn't remove one dataset before the other
     random.shuffle(trajectories)
     if encoder is not None:
@@ -205,10 +223,14 @@ def make_modules(cfg, ss=False, val=False, dyn=False, gi=False, constr=False):
 
     modules = {}
 
-    encoder = VanillaVAE(cfg)
-    if cfg.enc_checkpoint:
-        encoder.load(cfg.enc_checkpoint)
-    modules['enc'] = encoder
+    if cfg.obs_type == 'pixels':
+        encoder = VanillaVAE(cfg)
+        if cfg.enc_checkpoint:
+            encoder.load(cfg.enc_checkpoint)
+        modules['enc'] = encoder
+    else:
+        encoder = None
+        modules['enc'] = encoder
 
     if ss:
         safe_set_type = cfg.safe_set_type

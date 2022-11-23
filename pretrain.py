@@ -1,5 +1,6 @@
 import warnings
 
+from agents.unsupervised_learning.smm import SMMAgent
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 
 import os
@@ -26,6 +27,8 @@ torch.backends.cudnn.benchmark = True
 
 from libraries.dmc.dmc_tasks import PRIMAL_TASKS
 
+from tqdm import tqdm
+import libraries.safe.simple_point_bot as spb
 
 def make_agent(obs_type, obs_spec, action_spec, num_expl_steps, cfg):
     cfg.obs_type = obs_type
@@ -64,9 +67,9 @@ class Workspace:
             task = PRIMAL_TASKS[self.cfg.domain]
 
         self.train_env = make(task, cfg.obs_type, cfg.frame_stack,
-                              cfg.action_repeat, cfg.seed)
+                              cfg.action_repeat, cfg.seed, cfg.random_start)
         self.eval_env = make(task, cfg.obs_type, cfg.frame_stack,
-                             cfg.action_repeat, cfg.seed)
+                             cfg.action_repeat, cfg.seed, cfg.random_start)
         print(f"obs_type: {cfg.obs_type}")
         print(f"obs_spec: {self.train_env.observation_spec()}")
         print(f"action_spec: {self.train_env.action_spec()}")
@@ -159,6 +162,57 @@ class Workspace:
             log('episode', self.global_episode)
             log('step', self.global_step)
 
+        # Make Reward heatmap's for smm
+        if type(self.agent) == SMMAgent and self.cfg.plot:
+            
+            # p_star
+            reward_dir = os.path.join(self.work_dir, str(self.global_episode))
+            os.makedirs(reward_dir)
+            p_reward_func = lambda x: 100.0 * np.log(self.agent.get_goal_p_star(x))
+            self.plot_reward(reward_func=p_reward_func, env=self.eval_env, file=os.path.join(reward_dir, 'p_star.png'), z_prior=False)
+            
+            # pred_log
+            pred_log_func = lambda x: self.agent.state_ent_coef * self.agent.smm.vae.loss(x)[1]
+            self.plot_reward(reward_func=pred_log_func, env=self.eval_env, file=os.path.join(reward_dir, 'cond_ent.png'), z_prior=True)
+            
+            # h_z_s
+            def h_z_s_func(x):
+                obs = x[0, :2]
+                z = x[0, 2:]
+                logits = self.agent.smm.predict_logits(obs)
+                logits = torch.unsqueeze(logits, 0)
+                z = torch.unsqueeze(z, 0)
+                h_z_s = self.agent.latent_cond_ent_coef * self.agent.smm.loss(logits, z).unsqueeze(-1)
+                return h_z_s
+            self.plot_reward(reward_func=h_z_s_func, env=self.eval_env, file=os.path.join(reward_dir, 'h_z_s.png'), z_prior=True)
+            
+            # h_z
+            def h_z_func(z):
+                z = z.to('cpu')
+                h_z = np.log(self.cfg.skill_dim)  # One-hot z encoding
+                # h_z *= torch.ones_like(1).to(self.device)
+                h_z = torch.tensor(h_z)
+                return self.agent.latent_ent_coef * h_z
+                
+            # intrinsic_reward
+            def intrinsic_reward(x):
+                x = x.to(self.device)
+                obs = x[:2]
+                z = x[2:]
+                p_reward = p_reward_func(obs)
+                p_reward = torch.tensor(p_reward)
+                p_reward = p_reward.to(self.device)
+                pred_log_reward = pred_log_func(x)
+                h_z_s_reward = h_z_s_func(x)
+                h_z_reward = h_z_func(z)
+                h_z_reward = h_z_reward.to(self.device)
+                # print(f'p_reward.shape: {p_reward.shape}, pred_log_reward.shape: {pred_log_reward.shape}, h_z_s_reward.shape: {h_z_s_reward.shape}, h_z_reward.shape: {h_z_reward.shape}')
+                int_reward = -p_reward + pred_log_reward + h_z_s_reward + h_z_reward
+                return int_reward
+
+            self.plot_reward(reward_func=intrinsic_reward, env=self.eval_env, file=os.path.join(reward_dir, 'int_reward.png'), z_prior=True)
+
+
     def train(self):
         # predicates
         train_until_step = utils.Until(self.cfg.num_train_frames,
@@ -167,6 +221,8 @@ class Workspace:
                                       self.cfg.action_repeat)
         eval_every_step = utils.Every(self.cfg.eval_every_frames,
                                       self.cfg.action_repeat)
+        snapshots = self.cfg.snapshots.copy()
+        snapshot = snapshots[0]
 
         episode_step, episode_reward = 0, 0
         time_step = self.train_env.reset()
@@ -199,8 +255,10 @@ class Workspace:
                 self.replay_storage.add(time_step, meta)
                 self.train_video_recorder.init(time_step.observation)
                 # try to save snapshot
-                if self.global_frame in self.cfg.snapshots:
+                if self.global_frame > snapshot:
                     self.save_snapshot()
+                    snapshots = snapshots[1:]
+                    snapshot = snapshots[0]
                 episode_step = 0
                 episode_reward = 0
 
@@ -221,6 +279,7 @@ class Workspace:
             # try to update the agent
             if not seed_until_step(self.global_step):
                 metrics = self.agent.update(self.replay_iter, self.global_step)
+                # print(f'metrics: {metrics}')
                 self.logger.log_metrics(metrics, self.global_frame, ty='train')
 
             # take env step
@@ -240,6 +299,36 @@ class Workspace:
         with snapshot.open('wb') as f:
             torch.save(payload, f)
 
+    def plot_reward(self, reward_func, env, file, z_prior=False, plot=True, show=False):
+        """ONLY FOR SPB"""
+        if z_prior:
+            for z in range(self.cfg.skill_dim):
+                z_array = np.zeros(self.cfg.skill_dim, dtype=np.float32)
+                z_array[z] = 1.0
+                data = np.zeros((spb.WINDOW_HEIGHT, spb.WINDOW_WIDTH))
+                for y in tqdm(range(0, spb.WINDOW_HEIGHT)):
+                    for x in range(0, spb.WINDOW_WIDTH):
+                        obs = np.array((x, y), dtype=np.float32)
+                        obs = np.concatenate((obs, z_array), axis=0)
+                        obs = np.expand_dims(obs, axis=0)
+                        obs = torch.tensor(obs)
+                        obs = obs.to(self.cfg.device)
+                        data[y, x] = reward_func(obs)
+                if plot:
+                    split_file = file.split('.')
+                    split_file[-2] = split_file[-2] + str(z)
+                    file_name = '.'.join(split_file)
+                    env.draw(heatmap=data, file=file_name, show=show)
+        else:
+            data = np.zeros((spb.WINDOW_HEIGHT, spb.WINDOW_WIDTH))
+            for y in tqdm(range(0, spb.WINDOW_HEIGHT)):
+                for x in range(0, spb.WINDOW_WIDTH):
+                    obs = np.array([x, y])
+                    obs = np.expand_dims(obs, axis=0)
+                    obs = torch.tensor(obs)
+                    data[y, x] = reward_func(obs)
+            if plot:
+                env.draw(heatmap=data, file=file, show=show)
 
 @hydra.main(config_path='configs/.', config_name='pretrain')
 def main(cfg):

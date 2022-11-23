@@ -2,6 +2,10 @@ defaults:
   - agent: ddpg
   - override hydra/launcher: submitit_local
 
+state_ent_coef: 1.0
+latent_ent_coef: 1.0
+latent_cond_ent_coef: 1.0
+
 # mode
 reward_free: false
 # task settings
@@ -9,16 +13,17 @@ task: walker_stand
 obs_type: states # [states, pixels]
 frame_stack: 1 # only works if obs_type=pixels
 action_repeat: 1 # set to 2 for pixels
-skill_dim: 10
 discount: 0.99
+skill_dim: 51
+random_start: true
 # train settings
-num_train_frames: 2000010
 num_seed_frames: 4000
-# eval
-eval_every_frames: 10000
-num_eval_episodes: 10
+# sample settings
+num_sample_episodes: 5000
+num_prioritize_sample_episodes: 600
+data_type: unsupervised  # either offline_rl or unsupervised changes the data collected from the environment
 # pretrained
-snapshot_ts: 100000
+snapshot_ts: 1000000
 snapshot_base_dir: ./../../../data/models/
 # replay buffer
 replay_buffer_size: 1000000
@@ -29,8 +34,9 @@ update_encoder: false # can be either true or false depending if we want to fine
 # misc
 seed: 1
 device: cuda
-save_video: true
+save_video: false
 save_train_video: false
+save_to_data: true
 use_tb: false
 use_wandb: false
 # experiment

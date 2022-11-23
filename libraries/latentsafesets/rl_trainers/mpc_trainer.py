@@ -16,11 +16,11 @@ class MPCTrainer(Trainer):
         self.logdir = cfg.log_dir
 
         loss_plotter = LossPlotter(os.path.join(self.logdir, 'loss_plots'))
-        self.encoder_data_loader = EncoderDataLoader(cfg.env, frame_stack=cfg.frame_stack)
 
         self.trainers = []
 
-        self.trainers.append(VAETrainer(cfg, modules['enc'], loss_plotter))
+        if self.cfg.obs_type == 'pixels':
+            self.trainers.append(VAETrainer(cfg, modules['enc'], loss_plotter))
         self.trainers.append(PETSDynamicsTrainer(cfg, modules['dyn'], loss_plotter))
         self.trainers.append(ValueTrainer(env, cfg, modules['val'], loss_plotter))
         self.trainers.append(SafeSetTrainer(env, cfg, modules['ss'], loss_plotter))
@@ -32,6 +32,8 @@ class MPCTrainer(Trainer):
         os.makedirs(update_dir, exist_ok=True)
         for trainer in self.trainers:
             if type(trainer) == VAETrainer:
+
+                self.encoder_data_loader = EncoderDataLoader(self.cfg.env, frame_stack=self.cfg.frame_stack)
                 trainer.initial_train(self.encoder_data_loader, update_dir)
             else:
                 trainer.initial_train(replay_buffer, update_dir)

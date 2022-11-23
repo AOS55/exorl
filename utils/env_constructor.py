@@ -9,7 +9,8 @@ from dm_control.suite.wrappers import action_scale, pixels
 from dm_env import StepType, specs
 
 import libraries.dmc as cdmc
-from libraries.safe import SimplePointBot as SPB
+from libraries.safe import SimplePointBot, SimpleVelocityBot
+from libraries.safe.dmc import ant_obstacle
 from .wrappers import GymWrapper
 from .wrappers import FrameStack
 
@@ -21,7 +22,14 @@ ENV_TYPES = {
     'BipedalWalker-v3': 'gym',
     'CarRacing-v2': 'gym',
     'LunarLander-v2': 'gym',
-    'SimplePointBot': 'safe'
+    'SimplePointBot': 'safe',
+    'SimpleVelocityBot': 'safe',
+    'ant_obstacle': 'dmc'
+}
+
+SAFE_ENVS = {
+    'SimplePointBot': SimplePointBot,
+    'SimpleVelocityBot': SimpleVelocityBot
 }
 
 class ExtendedTimeStep(NamedTuple):
@@ -305,35 +313,35 @@ class ExtendedTimeStepWrapper(dm_env.Environment):
         return getattr(self._env, name)
 
 
-def _make_jaco(obs_type, domain, task, frame_stack, action_repeat, seed):
+def _make_jaco(obs_type, domain, task, frame_stack, action_repeat, seed, random_start):
     env = cdmc.make_jaco(task, obs_type, seed)
     env = ActionDTypeWrapper(env, np.float32)
     env = ActionRepeatWrapper(env, action_repeat)
     env = FlattenJacoObservationWrapper(env)
     return env
 
-def _make_gym(obs_type, domain, task, frame_stack, action_repeat, seed):
+def _make_gym(obs_type, domain, task, frame_stack, action_repeat, seed, random_start):
     env = gym.make(domain, render_mode='single_rgb_array')
     env = GymWrapper(env)
     env = ActionDTypeWrapper(env, np.float32)
     env = ActionRepeatWrapper(env, action_repeat)
     return env
 
-def _make_custom(obs_type, domain, task, frame_stack, action_repeat, seed):
+def _make_custom(obs_type, domain, task, frame_stack, action_repeat, seed, random_start=False):
     if obs_type == 'states':
         from_pixels = False
-        env = SPB(from_pixels=from_pixels)
+        env = SAFE_ENVS[domain](from_pixels=from_pixels, random_reset=random_start)
         env = GymWrapper(env)
     else:
         from_pixels = True
-        env = SPB(from_pixels=from_pixels)
+        env = SAFE_ENVS[domain](from_pixels=from_pixels, random_reset=random_start)
         env = FrameStack(env, num_stack=frame_stack)
         env = GymWrapper(env)
     env = ActionDTypeWrapper(env, np.float32)
     env = ActionRepeatWrapper(env, action_repeat)
     return env
 
-def _make_dmc(obs_type, domain, task, frame_stack, action_repeat, seed):
+def _make_dmc(obs_type, domain, task, frame_stack, action_repeat, seed, random_start):
     visualize_reward = False
     if (domain, task) in suite.ALL_TASKS:
         env = suite.load(domain,
@@ -359,7 +367,7 @@ def _make_dmc(obs_type, domain, task, frame_stack, action_repeat, seed):
     return env
 
 
-def make(name, obs_type, frame_stack, action_repeat, seed):
+def make(name, obs_type, frame_stack, action_repeat, seed, random_start=False):
     assert obs_type in ['states', 'pixels']
     if '_' in name:
         domain, task = name.split('_', 1)
@@ -378,7 +386,7 @@ def make(name, obs_type, frame_stack, action_repeat, seed):
         make_fn = _make_custom
     else:
         make_fn = _make_dmc
-    env = make_fn(obs_type, domain, task, frame_stack, action_repeat, seed)
+    env = make_fn(obs_type, domain, task, frame_stack, action_repeat, seed, random_start=random_start)
 
     if env_type in ('gym', 'safe'):
         # env = ObservationDTypeWrapper(env, np.float32)

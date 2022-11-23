@@ -41,7 +41,7 @@ class GoalIndicatorTrainer(Trainer):
             if i % self.cfg.checkpoint_freq == 0 and i > 0:
                 self.gi.save(os.path.join(update_dir, 'gi_%d.pth' % i))
 
-        # spbu.evaluate_constraint_func(self.gi, file=os.path.join(update_dir, "gi_init.pdf"))
+        spbu.evaluate_constraint_func(self.gi, self.env, file=os.path.join(update_dir, "gi_init.pdf"), obs_type=self.cfg.obs_type)
         self.gi.save(os.path.join(update_dir, 'gi.pth'))
 
     def update(self, replay_buffer, update_dir):
@@ -64,4 +64,4 @@ class GoalIndicatorTrainer(Trainer):
         next_obs = out_dict['next_obs']
         pu.visualize_onezero(next_obs, self.gi,
                              file,
-                             env=self.env)
+                             env=self.env, obs_type=self.cfg.obs_type)

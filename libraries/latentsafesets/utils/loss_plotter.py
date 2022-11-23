@@ -29,7 +29,7 @@ class LossPlotter:
         for key in self.data:
             losses = self.data[key]
             fname = os.path.join(self.logdir, '%s_loss.pdf' % key)
-            # pu.loss_plot(losses, fname, title='%s loss' % key)
+            pu.loss_plot(losses, fname, title='%s loss' % key)
 
     def print(self, i=None, other_data=None):
         if other_data is None:

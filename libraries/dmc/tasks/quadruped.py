@@ -24,6 +24,7 @@ from dm_control.suite import common
 from dm_control.utils import containers
 from dm_control.utils import rewards
 from dm_control.utils import xml_tools
+from dm_control.utils import io as resources
 from lxml import etree
 import numpy as np
 from scipy import ndimage
@@ -73,7 +74,7 @@ def get_model_and_assets():
     """Returns a tuple containing the model XML string and a dict of assets."""
     root_dir = os.path.dirname(os.path.dirname(__file__))
     xml = resources.GetResource(
-        os.path.join(root_dir, 'custom_dmc_tasks', 'quadruped.xml'))
+        os.path.join(root_dir, 'tasks', 'quadruped.xml'))
     return xml, common.ASSETS
 
 
@@ -84,7 +85,7 @@ def make_model(floor_size=None,
     """Returns the model XML string."""
     root_dir = os.path.dirname(os.path.dirname(__file__))
     xml_string = common.read_model(
-        os.path.join(root_dir, 'custom_dmc_tasks', 'quadruped.xml'))
+        os.path.join(root_dir, 'tasks', 'quadruped.xml'))
     parser = etree.XMLParser(remove_blank_text=True)
     mjcf = etree.XML(xml_string, parser)
 

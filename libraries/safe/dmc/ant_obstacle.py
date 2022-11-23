@@ -36,8 +36,10 @@ def make(task,
     env.task.visualize_reward = visualize_reward
     return env
 
-@SUITE.add('benchmarking')
-def navigate(time_limit=_DEFAULT_TIME_LIMIT, random=None, environment_kwargs=None):
+@SUITE.add()
+def navigate(time_limit=_DEFAULT_TIME_LIMIT, 
+             random=None,
+             environment_kwargs=None):
     """Navigate to a goal position"""
     walker = Ant()
     arena = obstacles.Obstacle()

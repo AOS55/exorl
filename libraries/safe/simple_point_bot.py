@@ -35,7 +35,8 @@ class SimplePointBot(Env, utils.EzPickle):
                  horizon=100,
                  constr_penalty=-100,
                  goal_thresh=3,
-                 noise_scale=0.125):
+                 noise_scale=0.125,
+                 random_reset=False):
         utils.EzPickle.__init__(self)
         self.done = self.state = None
         self.horizon = horizon
@@ -43,6 +44,7 @@ class SimplePointBot(Env, utils.EzPickle):
         self.end_pos = end_pos
         self.goal_thresh = goal_thresh
         self.noise_scale = noise_scale
+        self.random_reset = random_reset
         self.constr_penalty = constr_penalty
         self.action_space = Box(-np.ones(2) * MAX_FORCE,
                                 np.ones(2) * MAX_FORCE)
@@ -70,6 +72,11 @@ class SimplePointBot(Env, utils.EzPickle):
         constr = self.obstacle(next_state)
         self.done = self._episode_steps >= self.horizon
 
+        # Terminate episode if we hit the wall
+        if 0+1 >= self.state[0] or self.state[0] >= WINDOW_WIDTH-1:
+            self.done = True
+        if 0+1 >= self.state[1] or self.state[1] >= WINDOW_HEIGHT-1:
+            self.done = True
         if self._from_pixels:
             obs = self._state_to_image(self.state)
         else:
@@ -84,7 +91,7 @@ class SimplePointBot(Env, utils.EzPickle):
         }
 
     def reset(self, random_start=False):
-        if random_start:
+        if random_start or self.random_reset:
             self.state = np.random.random(2) * (WINDOW_WIDTH, WINDOW_HEIGHT)
             if self.obstacle(self.state):
                 self.reset(True)
@@ -205,6 +212,7 @@ class SimplePointBot(Env, utils.EzPickle):
 
         ax.set_aspect('equal')
         ax.autoscale_view()
+        ax.invert_yaxis()
 
         if file is not None:
             plt.savefig(file)
@@ -258,6 +266,7 @@ class SimplePointBot(Env, utils.EzPickle):
         ax.add_patch(circle)
         ax.annotate("start", xy=(self.start_pos[0], self.start_pos[1] - 8), fontsize=10, ha="center")
         ax.annotate("goal", xy=(self.end_pos[0], self.end_pos[1] - 8), fontsize=10, ha="center")
+        ax.invert_yaxis()
 
 
 class SimplePointBotLong(SimplePointBot):

@@ -11,3 +11,5 @@ datasets/
 libraries/gym
 *outputs
 models/
+*.log
+*.out
