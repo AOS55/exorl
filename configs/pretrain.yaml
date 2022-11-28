@@ -20,7 +20,7 @@ discount: 0.99
 random_start: false
 plot: false
 # train settings
-num_train_frames: 16000100
+num_train_frames: 20000100
 num_seed_frames: 4000
 # eval
 eval_every_frames: 100000
