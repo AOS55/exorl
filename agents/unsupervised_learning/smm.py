@@ -274,7 +274,7 @@ class SMMAgent(DDPGAgent):
             h_z = np.log(self.z_dim)  # One-hot z encoding
             h_z *= torch.ones_like(extr_reward).to(self.device)
 
-            pred_log_ratios = self.state_ent_coef * h_s_z.detach()
+            pred_log_ratios = torch.log(self.state_ent_coef * h_s_z.detach())
 
             if self.obs_type=='pixels':
                 # p^*(s) is ignored, as state space dimension is inaccessible from pixel input
