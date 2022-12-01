@@ -15,7 +15,7 @@ state_ent_coef: 1.0
 latent_ent_coef: 1.0
 latent_cond_ent_coef: 1.0
 
-skill_dim: 51
+skill_dim: 20
 discount: 0.99
 random_start: false
 plot: false
@@ -35,7 +35,7 @@ batch_size: ${agent.batch_size}
 nstep: ${agent.nstep}
 update_encoder: true # should always be true for pre-training
 # misc
-seed: 2
+seed: 4
 device: cuda
 save_video: true
 save_train_video: false
