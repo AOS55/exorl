@@ -10,6 +10,7 @@ from dm_env import StepType, specs
 
 import libraries.dmc as cdmc
 from libraries.safe import SimplePointBot, SimpleVelocityBot
+from libraries.open_ended import BipedalWalkerCustom
 from libraries.safe.dmc import ant_obstacle
 from .wrappers import GymWrapper
 from .wrappers import FrameStack
@@ -24,12 +25,17 @@ ENV_TYPES = {
     'LunarLander-v2': 'gym',
     'SimplePointBot': 'safe',
     'SimpleVelocityBot': 'safe',
-    'ant_obstacle': 'dmc'
+    'ant_obstacle': 'dmc',
+    'BipedalCustom': 'open_ended'
 }
 
 SAFE_ENVS = {
     'SimplePointBot': SimplePointBot,
     'SimpleVelocityBot': SimpleVelocityBot
+}
+
+OPEN_ENDED_ENVS = {
+    'BipedalCustom': BipedalWalkerCustom
 }
 
 class ExtendedTimeStep(NamedTuple):
@@ -327,6 +333,13 @@ def _make_gym(obs_type, domain, task, frame_stack, action_repeat, seed, random_s
     env = ActionRepeatWrapper(env, action_repeat)
     return env
 
+def _make_open_ended(obs_type, domain, task, frame_stack, action_repeat, seed, random_start):
+    env = OPEN_ENDED_ENVS[domain](render_mode='single_rgb_array')
+    env = GymWrapper(env)
+    env = ActionDTypeWrapper(env, np.float32)
+    env = ActionRepeatWrapper(env, action_repeat)
+    return env
+
 def _make_custom(obs_type, domain, task, frame_stack, action_repeat, seed, random_start=False):
     if obs_type == 'states':
         from_pixels = False
@@ -384,6 +397,8 @@ def make(name, obs_type, frame_stack, action_repeat, seed, random_start=False):
         make_fn = _make_gym
     elif env_type == 'safe':
         make_fn = _make_custom
+    elif env_type == 'open_ended':
+        make_fn = _make_open_ended
     else:
         make_fn = _make_dmc
     env = make_fn(obs_type, domain, task, frame_stack, action_repeat, seed, random_start=random_start)
