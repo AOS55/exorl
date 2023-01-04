@@ -53,7 +53,7 @@ class Workspace:
                 cfg.experiment, cfg.agent.name, cfg.domain, cfg.obs_type,
                 str(cfg.seed)
             ])
-            wandb.init(project="urlb", group=cfg.agent.name, name=exp_name)
+            wandb.init(project="urls", group=cfg.agent.name, name=exp_name)
 
         self.logger = Logger(self.work_dir,
                              use_tb=cfg.use_tb,
