@@ -21,7 +21,7 @@ random_start: false
 plot: false
 # train settings
 num_train_frames: 20000100
-num_seed_frames: 4000
+num_seed_frames: 100000
 # eval
 eval_every_frames: 100000
 num_eval_episodes: 10
@@ -35,12 +35,12 @@ batch_size: ${agent.batch_size}
 nstep: ${agent.nstep}
 update_encoder: true # should always be true for pre-training
 # misc
-seed: 4
+seed: 5
 device: cuda
 save_video: true
 save_train_video: false
 use_tb: false
-use_wandb: false
+use_wandb: true
 # experiment
 experiment: exp
 
