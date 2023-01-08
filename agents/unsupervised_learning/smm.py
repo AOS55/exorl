@@ -274,7 +274,7 @@ class SMMAgent(DDPGAgent):
             h_z = np.log(self.z_dim)  # One-hot z encoding
             h_z *= torch.ones_like(extr_reward).to(self.device)
 
-            pred_log_ratios = torch.log(self.state_ent_coef * h_s_z.detach())
+            pred_log_ratios = torch.log(h_s_z.detach())
 
             if self.obs_type=='pixels':
                 # p^*(s) is ignored, as state space dimension is inaccessible from pixel input
@@ -288,7 +288,7 @@ class SMMAgent(DDPGAgent):
                 log_p_star = torch.tensor(log_p_star).to(self.device)
                 # TODO: Check signs in this intrinsic reward function, maybe ask author  <-- checked and seems to be correct for what we need
                 # intr_reward = log_p_star + pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
-                intr_reward = log_p_star + pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
+                intr_reward = 100.0 * log_p_star + self.state_ent_coef * pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
                 # print(f'intr_reward: {intr_reward[0]} = p*: {100 * log_p_star[0]} + rho_pi: {pred_log_ratios[0]} +h(z): {self.latent_ent_coef * h_z[0]} + h(z|s): {self.latent_cond_ent_coef * h_z_s.detach()[0]}')
                 reward = intr_reward
         else:
