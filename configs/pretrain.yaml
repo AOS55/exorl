@@ -11,14 +11,14 @@ frame_stack: 1 # only works if obs_type=pixels
 action_repeat: 1 # set to 2 for pixels
 
 # smm reward params
-state_ent_coef: 1.0
-latent_ent_coef: 1.0
-latent_cond_ent_coef: 1.0
+state_ent_coef: 0.0
+latent_ent_coef: 0.0
+latent_cond_ent_coef: 0.0
 
 skill_dim: 20
 discount: 0.99
 random_start: false
-plot: false
+plot: true
 # train settings
 num_train_frames: 20000100
 num_seed_frames: 100000
