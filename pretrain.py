@@ -15,6 +15,7 @@ import agents
 import numpy as np
 import torch
 import wandb
+from omegaconf import OmegaConf
 from dm_env import specs
 
 from utils.env_constructor import make, ENV_TYPES
@@ -53,7 +54,7 @@ class Workspace:
                 cfg.experiment, cfg.agent.name, cfg.domain, cfg.obs_type,
                 str(cfg.seed)
             ])
-            wandb.init(project="urls", group=cfg.agent.name, name=exp_name)
+            wandb.init(project="urls", group=cfg.agent.name, name=exp_name, config=OmegaConf.to_container(cfg, resolve=True))
 
         self.logger = Logger(self.work_dir,
                              use_tb=cfg.use_tb,
