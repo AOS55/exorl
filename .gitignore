@@ -11,5 +11,7 @@ datasets/
 libraries/gym
 *outputs
 models/
+wandb/
+eval_video/
 *.log
 *.out
