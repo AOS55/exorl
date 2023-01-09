@@ -327,8 +327,6 @@ class SMMAgent(SACAgent):
         with torch.no_grad():
             self.polyak_update(old_net=self.Q1_targ, new_net=self.Q1)
             self.polyak_update(old_net=self.Q2_targ, new_net=self.Q2)
-        # utils.soft_update_params(self.critic, self.critic_target,
-        #                          self.critic_target_tau)
 
         return metrics
 
