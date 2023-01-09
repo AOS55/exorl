@@ -1,3 +1,18 @@
+import hydra
+import agents
+import numpy as np
+import torch
+import wandb
+from omegaconf import OmegaConf
+from dm_env import specs
+from pathlib import Path
+
+from utils.env_constructor import make, ENV_TYPES
+import utils.utils as utils
+from utils.logger import Logger
+from utils.replay_buffer import MetaReplayBuffer, MetaTransition
+from utils.video import TrainVideoRecorder, VideoRecorder
+
 import warnings
 
 from agents.unsupervised_learning.smm import SMMAgent
@@ -8,24 +23,7 @@ import os
 os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
 os.environ['MUJOCO_GL'] = 'egl'
 
-from pathlib import Path
-
-import hydra
-import agents
-import numpy as np
-import torch
-import wandb
-from omegaconf import OmegaConf
-from dm_env import specs
-
-from utils.env_constructor import make, ENV_TYPES
-import utils.utils as utils
-from utils.logger import Logger
-from utils.replay_buffer import ReplayBufferStorage, make_replay_loader
-from utils.video import TrainVideoRecorder, VideoRecorder
-
 torch.backends.cudnn.benchmark = True
-
 from libraries.dmc.dmc_tasks import PRIMAL_TASKS
 
 from tqdm import tqdm
@@ -43,7 +41,6 @@ class Workspace:
     def __init__(self, cfg):
         self.work_dir = Path.cwd()
         print(f'workspace: {self.work_dir}')
-
         self.cfg = cfg
         utils.set_seed_everywhere(cfg.seed)
         self.device = torch.device(cfg.device)
@@ -84,25 +81,12 @@ class Workspace:
                                 cfg.num_seed_frames // cfg.action_repeat,
                                 cfg.agent)
 
+        self.goal = (150, 75)
+
         # get meta specs
         meta_specs = self.agent.get_meta_specs()
-        # create replay buffer
-        data_specs = (self.train_env.observation_spec(),
-                      self.train_env.action_spec(),
-                      specs.Array((1,), np.float32, 'reward'),
-                      specs.Array((1,), np.float32, 'discount'))
 
-        # create data storage
-        self.replay_storage = ReplayBufferStorage(data_specs, meta_specs,
-                                                  self.work_dir / 'buffer')
-
-        # create replay buffer
-        self.replay_loader = make_replay_loader(self.replay_storage,
-                                                cfg.replay_buffer_size,
-                                                cfg.batch_size,
-                                                cfg.replay_buffer_num_workers,
-                                                False, cfg.nstep, cfg.discount)
-        self._replay_iter = None
+        self.replay_buffer = MetaReplayBuffer(capacity=int(cfg.replay_buffer_size))
 
         # create video recorders
         self.video_recorder = VideoRecorder(
@@ -130,11 +114,22 @@ class Workspace:
     def global_frame(self):
         return self.global_step * self.cfg.action_repeat
 
-    @property
-    def replay_iter(self):
-        if self._replay_iter is None:
-            self._replay_iter = iter(self.replay_loader)
-        return self._replay_iter
+    def get_goal_p_star(self, agent_pos):
+        x_dist = agent_pos[0] - self.goal[0]
+        y_dist = agent_pos[1] - self.goal[1]
+        # x_dist = x_dist.cpu().detach().numpy()
+        # y_dist = y_dist.cpu().detach().numpy()
+        dist = np.linalg.norm((x_dist, y_dist), axis=0)
+        # def _prior_distro(dist):
+        #     if dist > 1.0:
+        #         p_star = -np.log(dist)
+        #     else:
+        #         p_star = 1.0
+        #     return p_star
+        # p_star = _prior_distro(dist)
+        p_star = -0.01 * dist
+        # p_star = np.array(list(map(_prior_distro, dist)), dtype=np.float32)
+        return p_star
 
     def eval(self):
         step, episode, total_reward = 0, 0, 0
@@ -145,14 +140,16 @@ class Workspace:
             self.video_recorder.init(self.eval_env, enabled=(episode == 0))
             while not time_step.last():
                 with torch.no_grad(), utils.eval_mode(self.agent):
-                    action = self.agent.act(time_step.observation,
-                                            meta,
-                                            self.global_step,
-                                            eval_mode=True)
-                time_step = self.eval_env.step(action)
-                self.video_recorder.record(self.eval_env)
-                total_reward += time_step.reward
-                step += 1
+                    action = self.agent.act(time_step.observation, meta, self.global_step, eval_mode=True)
+                    time_step = self.eval_env.step(action)
+                    self.video_recorder.record(self.eval_env)
+                    reward = self.get_goal_p_star(time_step.observation)
+                    if self.cfg.domain == 'SimplePointBot':
+                        reward = self.get_goal_p_star(time_step.observation)
+                    else:
+                        reward = time_step.reward
+                    total_reward += reward
+                    step += 1
 
             episode += 1
             self.video_recorder.save(f'{self.global_frame}.mp4')
@@ -169,7 +166,7 @@ class Workspace:
             # p_star
             reward_dir = os.path.join(self.work_dir, str(self.global_episode))
             os.makedirs(reward_dir)
-            p_reward_func = lambda x: 100.0 * np.log(self.agent.get_goal_p_star(x))
+            p_reward_func = lambda x: self.get_goal_p_star(x)
             self.plot_reward(reward_func=p_reward_func, env=self.eval_env, file=os.path.join(reward_dir, 'p_star.png'), z_prior=False)
             
             # pred_log
@@ -216,52 +213,47 @@ class Workspace:
 
     def train(self):
         # predicates
-        train_until_step = utils.Until(self.cfg.num_train_frames,
-                                       self.cfg.action_repeat)
-        seed_until_step = utils.Until(self.cfg.num_seed_frames,
-                                      self.cfg.action_repeat)
-        eval_every_step = utils.Every(self.cfg.eval_every_frames,
-                                      self.cfg.action_repeat)
+        train_until_step = utils.Until(self.cfg.num_train_frames, self.cfg.action_repeat)
+        eval_every_step = utils.Every(self.cfg.eval_every_frames, self.cfg.action_repeat)
+        
         snapshots = self.cfg.snapshots.copy()
         snapshot = snapshots[0]
 
         episode_step, episode_reward = 0, 0
         time_step = self.train_env.reset()
         meta = self.agent.init_meta()
-        self.replay_storage.add(time_step, meta)
-        self.train_video_recorder.init(time_step.observation)
+        obs = time_step.observation
+        
         metrics = None
         while train_until_step(self.global_step):
+            
             if time_step.last():
                 self._global_episode += 1
-                self.train_video_recorder.save(f'{self.global_frame}.mp4')
-                # wait until all the metrics schema is populated
+                
                 if metrics is not None:
                     # log stats
                     elapsed_time, total_time = self.timer.reset()
                     episode_frame = episode_step * self.cfg.action_repeat
-                    with self.logger.log_and_dump_ctx(self.global_frame,
-                                                      ty='train') as log:
-                        log('fps', episode_frame / elapsed_time)
+                    fps = episode_frame / elapsed_time
+                    with self.logger.log_and_dump_ctx(self.global_frame, ty='train') as log:
+                        log('fps', fps)
                         log('total_time', total_time)
                         log('episode_reward', episode_reward)
                         log('episode_length', episode_frame)
                         log('episode', self.global_episode)
-                        log('buffer_size', len(self.replay_storage))
+                        log('buffer_size', len(self.replay_buffer.memory))
                         log('step', self.global_step)
 
                 # reset env
                 time_step = self.train_env.reset()
                 meta = self.agent.init_meta()
-                self.replay_storage.add(time_step, meta)
-                self.train_video_recorder.init(time_step.observation)
+                
                 # try to save snapshot
                 if self.global_frame > snapshot:
                     self.save_snapshot()
                     snapshots = snapshots[1:]
                     snapshot = snapshots[0]
-                episode_step = 0
-                episode_reward = 0
+                episode_step, episode_reward = 0, 0
 
             # try to evaluate
             if eval_every_step(self.global_step):
@@ -270,25 +262,33 @@ class Workspace:
                 self.eval()
 
             meta = self.agent.update_meta(meta, self.global_step, time_step)
+            
             # sample action
             with torch.no_grad(), utils.eval_mode(self.agent):
-                action = self.agent.act(time_step.observation,
-                                        meta,
-                                        self.global_step,
-                                        eval_mode=False)
+                action = self.agent.act(time_step.observation, meta, self.global_step, eval_mode=False)
 
             # try to update the agent
-            if not seed_until_step(self.global_step):
-                metrics = self.agent.update(self.replay_iter, self.global_step)
-                # print(f'metrics: {metrics}')
+            if self.replay_buffer.ready_for(self.cfg.batch_size):
+                metrics = self.agent.update(self.replay_buffer.sample(self.cfg.batch_size), self.global_step)
                 self.logger.log_metrics(metrics, self.global_frame, ty='train')
 
             # take env step
             time_step = self.train_env.step(action)
-            episode_reward += time_step.reward
-            self.replay_storage.add(time_step, meta)
-            self.train_video_recorder.record(time_step.observation)
+            
+            if time_step.last():
+                done = True
+            else:
+                done = False
+            if self.cfg.domain == "SimplePointBot":
+                reward = self.get_goal_p_star(time_step.observation)
+            else:
+                reward = time_step.reward
+            next_obs = time_step.observation
+            transition = MetaTransition(obs, action, reward, next_obs, done, meta['z'])
+            self.replay_buffer.push(transition)
+            obs = next_obs
             episode_step += 1
+            episode_reward += reward
             self._global_step += 1
 
     def save_snapshot(self):
