@@ -9,7 +9,9 @@ import torch.nn.functional as F
 from dm_env import specs
 
 import utils
-from .ddpg import DDPGAgent
+
+from utils.replay_buffer import MetaBatch 
+from .sac import SACAgent
 
 """
 Reimplementation of https://github.com/RLAgent/state-marginal-matching:
@@ -135,7 +137,7 @@ class PSMM(nn.Module):
         raise NotImplementedError
 
 
-class SMMAgent(DDPGAgent):
+class SMMAgent(SACAgent):
     def __init__(self, z_dim, sp_lr, vae_lr, vae_beta, state_ent_coef,
                  latent_ent_coef, latent_cond_ent_coef, update_encoder,
                  **kwargs):
@@ -150,8 +152,8 @@ class SMMAgent(DDPGAgent):
         #TODO: Fix this!
         self.obs_type = kwargs["obs_type"]
         super().__init__(**kwargs)
-        # self.obs_dim is now the real obs_dim (or repr_dim) + z_dim
-        self.smm = SMM(self.obs_dim - z_dim,
+        # self.obs_shape is now the real obs_shape (or repr_dim) + z_dim
+        self.smm = SMM(self.obs_shape - z_dim,
                        z_dim,
                        hidden_dim=kwargs['hidden_dim'],
                        vae_beta=vae_beta,
@@ -214,13 +216,8 @@ class SMMAgent(DDPGAgent):
         metrics = dict()
         loss, h_s_z = self.smm.vae.loss(obs_z)
         self.vae_optimizer.zero_grad()
-        if self.encoder_opt is not None:
-            self.encoder_opt.zero_grad(set_to_none=True)
         loss.backward()
         self.vae_optimizer.step()
-        if self.encoder_opt is not None:
-            self.encoder_opt.step()
-
         metrics['loss_vae'] = loss.cpu().item()
 
         return metrics, h_s_z
@@ -253,20 +250,16 @@ class SMMAgent(DDPGAgent):
         p_star = np.array(list(map(_prior_distro, dist)), dtype=np.float32)
         return p_star
 
-    def update(self, replay_iter, step):
+    def update(self, b: MetaBatch, step):
+        
         metrics = dict()
-        if step % self.update_every_steps != 0:
-            return metrics
-        batch = next(replay_iter)
 
-        obs, action, extr_reward, discount, next_obs, z = utils.to_torch(
-            batch, self.device)
-        obs = self.aug_and_encode(obs)
-        with torch.no_grad():
-            next_obs = self.aug_and_encode(next_obs)
+        obs, action, extr_reward, discount, next_obs, z = utils.to_torch((b.s, b.a, b.r, b.d, b.ns, b.z), self.device)
+
         obs_z = torch.cat([obs, z], dim=1)  # do not learn encoder in the VAE
         next_obs_z = torch.cat([next_obs, z], dim=1)
 
+        # calculate intinsic reward
         if self.reward_free:
             vae_metrics, h_s_z = self.update_vae(obs_z)
             pred_metrics, h_z_s = self.update_pred(obs.detach(), z)
@@ -288,7 +281,7 @@ class SMMAgent(DDPGAgent):
                 log_p_star = torch.tensor(log_p_star).to(self.device)
                 # TODO: Check signs in this intrinsic reward function, maybe ask author  <-- checked and seems to be correct for what we need
                 # intr_reward = log_p_star + pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
-                intr_reward = 100.0 * log_p_star + self.state_ent_coef * pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
+                intr_reward = log_p_star + self.state_ent_coef * pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
                 # print(f'intr_reward: {intr_reward[0]} = p*: {100 * log_p_star[0]} + rho_pi: {pred_log_ratios[0]} +h(z): {self.latent_ent_coef * h_z[0]} + h(z|s): {self.latent_cond_ent_coef * h_z_s.detach()[0]}')
                 reward = intr_reward
         else:
@@ -316,16 +309,33 @@ class SMMAgent(DDPGAgent):
             obs_z = obs_z.detach()
             next_obs_z = next_obs_z.detach()
 
+        # print(f'obs_z: {obs_z.detach().shape}')
+        # print(f'action: {action.shape}')
+        # print(f'reward: {reward.shape}')
+        # print(f'discount: {discount.shape}')
+        # print(f'next_obs_z: {next_obs_z.detach().shape}')
+
         # update critic
         metrics.update(
-            self.update_critic(obs_z.detach(), action, reward, discount,
-                               next_obs_z.detach(), step))
+            self.update_critic(obs_z.detach(), action, reward, discount, next_obs_z.detach(), step)
+        )
 
         # update actor
         metrics.update(self.update_actor(obs_z.detach(), step))
 
         # update critic target
-        utils.soft_update_params(self.critic, self.critic_target,
-                                 self.critic_target_tau)
+        with torch.no_grad():
+            self.polyak_update(old_net=self.Q1_targ, new_net=self.Q1)
+            self.polyak_update(old_net=self.Q2_targ, new_net=self.Q2)
+        # utils.soft_update_params(self.critic, self.critic_target,
+        #                          self.critic_target_tau)
 
         return metrics
+
+    def act(self, obs: np.array, meta: np.array, step, eval_mode) -> np.array:
+        # state = torch.tensor(state).unsqueeze(0).float()
+        meta = meta['z']
+        obs = np.concatenate((obs, meta), axis=0)
+        obs = torch.as_tensor(obs, device=self.device).unsqueeze(0).float()
+        action, _ = self.sample_action_and_compute_log_pi(obs, use_reparametrization_trick=False)
+        return action.cpu().numpy()[0]  # no need to detach first because we are not using the reparametrization trick

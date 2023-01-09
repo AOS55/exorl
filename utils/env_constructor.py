@@ -19,6 +19,7 @@ ENV_TYPES = {
     'jaco': 'dmc_jaco',
     'quadruped': 'dmc',
     'MountainCarContinuous-v0': 'gym',
+    'Pendulum-v1': 'gym',
     'BipedalWalker-v3': 'gym',
     'CarRacing-v2': 'gym',
     'LunarLander-v2': 'gym',

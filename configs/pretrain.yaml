@@ -18,7 +18,7 @@ latent_cond_ent_coef: 0.0
 skill_dim: 20
 discount: 0.99
 random_start: false
-plot: true
+plot: false
 # train settings
 num_train_frames: 20000100
 num_seed_frames: 100000
