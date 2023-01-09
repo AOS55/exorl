@@ -1,0 +1,40 @@
+defaults:
+  - _self_
+  - agent: sac
+  - override hydra/launcher: submitit_local
+
+# algo params
+domain: SimplePointBot # primal task will be inferred in runtime
+obs_type: states # [states, pixels]
+discount: 0.99
+frame_stack: 1
+action_repeat: 1
+
+# train settings
+num_train_frames: 1000000
+num_seed_frames: 10000
+random_start: false
+# eval
+eval_every_frames: 10000
+num_eval_episodes: 10
+save_video: true
+
+# replay_buffer
+replay_buffer_size: 1000000
+replay_buffer_num_workers: 4
+batch_size: ${agent.batch_size}
+nstep: ${agent.nstep}
+
+# misc
+seed: 1
+device: cuda
+log_dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${agent.name}
+use_tb: false
+use_wandb: true
+
+# experiment
+experiment: exp
+
+hydra:
+  run:
+    dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${agent.name}
