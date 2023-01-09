@@ -9,7 +9,9 @@ import torch.nn.functional as F
 from dm_env import specs
 
 import utils
-from .ddpg import DDPGAgent
+
+from utils.replay_buffer import MetaBatch
+from .sac import SACAgent
 
 
 class DIAYN(nn.Module):
@@ -28,7 +30,7 @@ class DIAYN(nn.Module):
         return skill_pred
 
 
-class DIAYNAgent(DDPGAgent):
+class DIAYNAgent(SACAgent):
     def __init__(self, update_skill_every_step, skill_dim, diayn_scale,
                  update_encoder, **kwargs):
         self.skill_dim = skill_dim
@@ -122,20 +124,11 @@ class DIAYNAgent(DDPGAgent):
                                             pred_z.size())[0]
         return d_loss, df_accuracy
 
-    def update(self, replay_iter, step):
+    def update(self, b: MetaBatch, step):
+        
         metrics = dict()
 
-        if step % self.update_every_steps != 0:
-            return metrics
-
-        batch = next(replay_iter)
-
-        obs, action, extr_reward, discount, next_obs, skill = utils.to_torch(
-            batch, self.device)
-
-        # augment and encode
-        obs = self.aug_and_encode(obs)
-        next_obs = self.aug_and_encode(next_obs)
+        obs, action, extr_reward, discount, next_obs, skill = utils.to_torch((b.s, b.a, b.r, b.d, b.ns, b.z), self.device)
 
         if self.reward_free:
             metrics.update(self.update_diayn(skill, next_obs, step))
@@ -169,8 +162,16 @@ class DIAYNAgent(DDPGAgent):
         # update actor
         metrics.update(self.update_actor(obs.detach(), step))
 
-        # update critic target
-        utils.soft_update_params(self.critic, self.critic_target,
-                                 self.critic_target_tau)
+       # update critic target
+        with torch.no_grad():
+            self.polyak_update(old_net=self.Q1_targ, new_net=self.Q1)
+            self.polyak_update(old_net=self.Q2_targ, new_net=self.Q2)
 
         return metrics
+
+    def act(self, obs: np.array, meta: np.array, step, eval_mode) -> np.array:
+        meta = meta['z']
+        obs = np.concatenate((obs, meta), axis=0)
+        obs = torch.as_tensor(obs, device=self.device).unsqueeze(0).float()
+        action, _ = self.sample_action_and_compute_log_pi(obs, use_reparametrization_trick=False)
+        return action.cpu().numpy()[0]  # no need to detach first because we are not using the reparametrization trick
