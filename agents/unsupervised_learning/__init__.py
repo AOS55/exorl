@@ -7,3 +7,4 @@ from .icm import ICMAgent
 from .proto import ProtoAgent
 from .rnd import RNDAgent
 from .smm import SMMAgent
+from .sac import SACAgent
