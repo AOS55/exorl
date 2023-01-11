@@ -13,5 +13,6 @@ libraries/gym
 models/
 wandb/
 eval_video/
+old_data/
 *.log
 *.out
