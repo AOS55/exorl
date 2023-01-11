@@ -32,20 +32,20 @@ class DIAYN(nn.Module):
 
 class DIAYNAgent(SACAgent):
     def __init__(self, update_skill_every_step, skill_dim, diayn_scale,
-                 update_encoder, **kwargs):
+                 update_encoder, skill_type, **kwargs):
         self.skill_dim = skill_dim
         self.update_skill_every_step = update_skill_every_step
         self.diayn_scale = diayn_scale
         self.update_encoder = update_encoder
         # increase obs shape to include skill dim
         kwargs["meta_dim"] = self.skill_dim
-        self.skill_type = kwargs["skill_type"]
+        self.skill_type = skill_type
 
         # create actor and critic
         super().__init__(**kwargs)
 
         # create diayn
-        self.diayn = DIAYN(self.obs_dim - self.skill_dim, self.skill_dim,
+        self.diayn = DIAYN(self.obs_shape - self.skill_dim, self.skill_dim,
                            kwargs['hidden_dim']).to(kwargs['device'])
 
         # loss criterion
@@ -83,12 +83,8 @@ class DIAYNAgent(SACAgent):
         loss, df_accuracy = self.compute_diayn_loss(next_obs, skill)
 
         self.diayn_opt.zero_grad()
-        if self.encoder_opt is not None:
-            self.encoder_opt.zero_grad(set_to_none=True)
         loss.backward()
         self.diayn_opt.step()
-        if self.encoder_opt is not None:
-            self.encoder_opt.step()
 
         if self.use_tb or self.use_wandb:
             metrics['diayn_loss'] = loss.item()
@@ -170,7 +166,7 @@ class DIAYNAgent(SACAgent):
         return metrics
 
     def act(self, obs: np.array, meta: np.array, step, eval_mode) -> np.array:
-        meta = meta['z']
+        meta = meta['skill']
         obs = np.concatenate((obs, meta), axis=0)
         obs = torch.as_tensor(obs, device=self.device).unsqueeze(0).float()
         action, _ = self.sample_action_and_compute_log_pi(obs, use_reparametrization_trick=False)

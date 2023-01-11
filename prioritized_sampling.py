@@ -18,7 +18,7 @@ from dm_env import specs
 from utils.env_constructor import make
 import utils.utils as utils
 from utils.logger import Logger
-from utils.replay_buffer import ReplayBufferStorage, make_replay_loader
+from utils.old_replay_buffer import ReplayBufferStorage, make_replay_loader
 from utils.video import TrainVideoRecorder, VideoRecorder
 
 torch.backends.cudnn.benchmark = True
@@ -131,6 +131,8 @@ class Workspace:
         return self._replay_iter
 
     def sample(self):
+
+        # predicates
         sample_until_step = utils.Until(self.cfg.num_sample_episodes)
         prioritize_sample_until_step = utils.Until(self.cfg.num_prioritize_sample_episodes)
         seed_until_step = utils.Until(self.cfg.num_seed_frames, self.cfg.action_repeat)

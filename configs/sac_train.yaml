@@ -26,7 +26,7 @@ batch_size: ${agent.batch_size}
 nstep: ${agent.nstep}
 
 # misc
-seed: 1
+seed: 5
 device: cuda
 log_dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${agent.name}
 use_tb: false

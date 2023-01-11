@@ -19,8 +19,8 @@ random_start: true
 # train settings
 num_seed_frames: 4000
 # sample settings
-num_sample_episodes: 5000
-num_prioritize_sample_episodes: 600
+num_sample_episodes: 100
+num_prioritize_sample_episodes: 100
 data_type: unsupervised  # either offline_rl or unsupervised changes the data collected from the environment
 # pretrained
 snapshot_ts: 1000000

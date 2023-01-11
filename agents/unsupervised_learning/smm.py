@@ -109,6 +109,9 @@ class SMM(nn.Module):
                        device=device)
         self.apply(utils.weight_init)
 
+        print(f"Density Model --> {self.vae}")
+        print(f"Discriminator Model --> {self.z_pred_net}")
+
     def predict_logits(self, obs):
         z_pred_logits = self.z_pred_net(obs)
         return z_pred_logits
@@ -139,7 +142,7 @@ class PSMM(nn.Module):
 
 class SMMAgent(SACAgent):
     def __init__(self, z_dim, sp_lr, vae_lr, vae_beta, state_ent_coef,
-                 latent_ent_coef, latent_cond_ent_coef, update_encoder,
+                 latent_ent_coef, latent_cond_ent_coef, update_encoder, use_goal_reward=False,
                  **kwargs):
         self.z_dim = z_dim
 
@@ -147,6 +150,7 @@ class SMMAgent(SACAgent):
         self.latent_ent_coef = latent_ent_coef
         self.latent_cond_ent_coef = latent_cond_ent_coef
         self.update_encoder = update_encoder
+        self.use_goal_reward = use_goal_reward
 
         kwargs["meta_dim"] = self.z_dim
         #TODO: Fix this!
@@ -241,13 +245,14 @@ class SMMAgent(SACAgent):
         x_dist = x_dist.cpu().detach().numpy()
         y_dist = y_dist.cpu().detach().numpy()
         dist = np.linalg.norm((x_dist, y_dist), axis=0)
-        def _prior_distro(dist):
-            if dist > 1.0:
-                p_star = 1/dist
-            else:
-                p_star = 1.0
-            return p_star
-        p_star = np.array(list(map(_prior_distro, dist)), dtype=np.float32)
+        # def _prior_distro(dist):
+        #     if dist > 1.0:
+        #         p_star = 1/dist
+        #     else:
+        #         p_star = 1.0
+        #     return p_star
+        # p_star = np.array(list(map(_prior_distro, dist)), dtype=np.float32)
+        p_star = -0.01 * dist
         return p_star
 
     def update(self, b: MetaBatch, step):
@@ -261,28 +266,35 @@ class SMMAgent(SACAgent):
 
         # calculate intinsic reward
         if self.reward_free:
+
             vae_metrics, h_s_z = self.update_vae(obs_z)
             pred_metrics, h_z_s = self.update_pred(obs.detach(), z)
-
             h_z = np.log(self.z_dim)  # One-hot z encoding
             h_z *= torch.ones_like(extr_reward).to(self.device)
 
-            pred_log_ratios = torch.log(h_s_z.detach())
-
             if self.obs_type=='pixels':
                 # p^*(s) is ignored, as state space dimension is inaccessible from pixel input
+                pred_log_ratios = self.state_ent_coef * torch.log(h_s_z.detach())
                 intr_reward = pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
                 reward = intr_reward
             else:
                 # p^*(s) is based on the goal hitting time
                 # TODO: Assumes obs is just (x, y) at front
-                p_star = self.get_goal_p_star(obs)
-                log_p_star = np.log(p_star)
-                log_p_star = torch.tensor(log_p_star).to(self.device)
-                # TODO: Check signs in this intrinsic reward function, maybe ask author  <-- checked and seems to be correct for what we need
-                # intr_reward = log_p_star + pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
-                intr_reward = log_p_star + self.state_ent_coef * pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
-                # print(f'intr_reward: {intr_reward[0]} = p*: {100 * log_p_star[0]} + rho_pi: {pred_log_ratios[0]} +h(z): {self.latent_ent_coef * h_z[0]} + h(z|s): {self.latent_cond_ent_coef * h_z_s.detach()[0]}')
+                if self.use_goal_reward:
+                    p_star = self.get_goal_p_star(obs)
+                    p_star = torch.tensor(p_star).to(self.device)
+                    pred_log_ratios = p_star + self.state_ent_coef * h_s_z.detach()
+                else:
+                    pred_log_ratios = extr_reward + self.state_ent_coef * h_s_z.detach()
+                intr_reward =  pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
+
+                # if pred_log_ratios.mean().item() > 10000:
+                #     print(f'intr_reward.mean().item(): {intr_reward.mean().item()}')
+                #     print(f'pred_log_ratios: {pred_log_ratios}')
+                #     print(f'h_s_z.detach(): {h_s_z.detach()}')
+                #     print(f'reward: {reward}')
+                #     print(f'obs: {obs}')
+
                 reward = intr_reward
         else:
             reward = extr_reward
@@ -290,7 +302,10 @@ class SMMAgent(SACAgent):
         if self.obs_type=='states' and self.reward_free:
             # add reward free to states motivation
             metrics['intr_reward'] = intr_reward.mean().item()
-            metrics['log_p_star']  = log_p_star.mean().item()
+            if self.use_goal_reward:
+                metrics['p_star'] = p_star.mean().item()
+            else:
+                metrics['extr_reward'] = extr_reward.mean().item()
             metrics['pred_log_ratios'] = pred_log_ratios.mean().item()
             metrics['latent_ent_coef'] = (self.latent_ent_coef * h_z).mean().item()
             metrics['latent_cond_ent_coef'] = (self.latent_cond_ent_coef * h_z_s.detach()).mean().item()

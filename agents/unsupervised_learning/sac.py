@@ -122,6 +122,8 @@ class SACAgent:
         self.alpha = alpha
         self.polyak = 1-tau
         
+        self.init_critic = init_critic
+
         self.train()
 
         print(f'Actor --> {self.Normal}')
@@ -232,3 +234,10 @@ class SACAgent:
         obs = torch.as_tensor(obs, device=self.device).unsqueeze(0).float()
         action, _ = self.sample_action_and_compute_log_pi(obs, use_reparametrization_trick=False)
         return action.cpu().numpy()[0]  # no need to detach first because we are not using the reparametrization trick
+
+    def init_from(self, other):
+        # copy parameters over
+        utils.hard_update_params(other.Normal, self.Normal)
+        if self.init_critic:
+            utils.hard_update_params(other.Q1, self.Q1)
+            utils.hard_update_params(other.Q2, self.Q2)

@@ -284,7 +284,13 @@ class Workspace:
             else:
                 reward = time_step.reward
             next_obs = time_step.observation
-            transition = MetaTransition(obs, action, reward, next_obs, done, meta['z'])
+
+            if self.cfg.agent.name == 'smm':
+                skill = meta['z']
+            else:
+                skill = meta['skill']
+
+            transition = MetaTransition(obs, action, reward, next_obs, done, skill)
             self.replay_buffer.push(transition)
             obs = next_obs
             episode_step += 1

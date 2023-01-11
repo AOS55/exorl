@@ -2,6 +2,11 @@
 _target_: agents.unsupervised_learning.DIAYNAgent
 name: diayn
 
+# DIAYN params
+update_skill_every_step: 50
+skill_dim: ${skill_dim}
+diayn_scale: 1.0
+
 # SAC params
 reward_free: ${reward_free}
 obs_type: ??? # to be specified later
@@ -23,3 +28,4 @@ batch_size: 256
 init_critic: true
 nstep: 3
 update_encoder: ${update_encoder}
+skill_type: discrete

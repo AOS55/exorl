@@ -6,16 +6,17 @@ name: smm
 z_dim: ${skill_dim} # default in codebase is 4
 
 # z discriminator params
-sp_lr: 1e-6
+sp_lr: 1e-3
 
 # vae params
-vae_lr: 1e-6
+vae_lr: 1e-2
 vae_beta: 0.5
 
 # reward params
 state_ent_coef: ${state_ent_coef}
 latent_ent_coef: ${latent_ent_coef}
 latent_cond_ent_coef: ${latent_cond_ent_coef}
+use_goal_reward: true
 
 # SAC params
 reward_free: ${reward_free}
@@ -23,7 +24,7 @@ obs_type: ??? # to be specified later
 obs_shape: ??? # to be specified later
 action_shape: ??? # to be specified later
 device: ${device}
-lr: 1e-3
+lr: 1e-4
 hidden_dim: 64
 gamma: 0.99
 tau: 0.005
