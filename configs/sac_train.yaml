@@ -19,6 +19,9 @@ eval_every_frames: 10000
 num_eval_episodes: 10
 save_video: true
 
+# exposed sac params
+alpha: 0.1
+
 # replay_buffer
 replay_buffer_size: 1000000
 replay_buffer_num_workers: 4
