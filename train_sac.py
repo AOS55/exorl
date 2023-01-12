@@ -68,7 +68,16 @@ class Workspace:
                                 cfg.num_seed_frames // cfg.action_repeat,
                                 cfg.agent)
 
-        self.goal = (150, 75)
+        self.goal = [150, 75]
+        WINDOW_WIDTH = 180
+        WINDOW_HEIGHT = 150
+
+        def _normalize(obs):
+            obs[0] = (obs[0] - WINDOW_WIDTH/2) / (WINDOW_WIDTH/2)
+            obs[1] = (obs[1] - WINDOW_HEIGHT/2) / (WINDOW_HEIGHT/2)
+            return obs
+        
+        self.goal = tuple(_normalize(self.goal))
 
         self.replay_buffer = ReplayBuffer(capacity=int(cfg.replay_buffer_size))
 
@@ -107,7 +116,7 @@ class Workspace:
         #         p_star = 1.0
         #     return p_star
         # p_star = _prior_distro(dist)
-        p_star = -0.01 * dist
+        p_star = -1.0 * dist
         # p_star = np.array(list(map(_prior_distro, dist)), dtype=np.float32)
         return p_star
 
