@@ -81,7 +81,7 @@ class Workspace:
                                 cfg.num_seed_frames // cfg.action_repeat,
                                 cfg.agent)
 
-        self.goal = (150, 75)
+        self.goal = [150, 75]
         WINDOW_WIDTH = 180
         WINDOW_HEIGHT = 150
 

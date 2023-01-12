@@ -163,7 +163,7 @@ class SMMAgent(SACAgent):
                        vae_beta=vae_beta,
                        device=kwargs['device']).to(kwargs['device'])
         
-        self.goal = (150, 75)  # TODO: Fix as part of config
+        self.goal = [150, 75]  # TODO: Fix as part of config
         WINDOW_WIDTH = 180
         WINDOW_HEIGHT = 150
 
