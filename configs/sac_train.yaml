@@ -11,7 +11,7 @@ frame_stack: 1
 action_repeat: 1
 
 # train settings
-num_train_frames: 1000000
+num_train_frames: 4000000
 num_seed_frames: 10000
 random_start: false
 # eval
