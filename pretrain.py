@@ -82,6 +82,15 @@ class Workspace:
                                 cfg.agent)
 
         self.goal = (150, 75)
+        WINDOW_WIDTH = 180
+        WINDOW_HEIGHT = 150
+
+        def _normalize(obs):
+            obs[0] = (obs[0] - WINDOW_WIDTH/2) / (WINDOW_WIDTH/2)
+            obs[1] = (obs[1] - WINDOW_HEIGHT/2) / (WINDOW_HEIGHT/2)
+            return obs
+        
+        self.goal = tuple(_normalize(self.goal))
 
         # get meta specs
         meta_specs = self.agent.get_meta_specs()
@@ -127,7 +136,7 @@ class Workspace:
         #         p_star = 1.0
         #     return p_star
         # p_star = _prior_distro(dist)
-        p_star = -0.01 * dist
+        p_star = -1.0 * dist
         # p_star = np.array(list(map(_prior_distro, dist)), dtype=np.float32)
         return p_star
 
