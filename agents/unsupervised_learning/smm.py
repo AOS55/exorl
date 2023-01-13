@@ -142,13 +142,14 @@ class PSMM(nn.Module):
 
 class SMMAgent(SACAgent):
     def __init__(self, z_dim, sp_lr, vae_lr, vae_beta, state_ent_coef,
-                 latent_ent_coef, latent_cond_ent_coef, update_encoder, use_goal_reward=False,
+                 latent_ent_coef, latent_cond_ent_coef, reward_scaling, update_encoder, use_goal_reward=False,
                  **kwargs):
         self.z_dim = z_dim
 
         self.state_ent_coef = state_ent_coef
         self.latent_ent_coef = latent_ent_coef
         self.latent_cond_ent_coef = latent_cond_ent_coef
+        self.reward_scaling = reward_scaling
         self.update_encoder = update_encoder
         self.use_goal_reward = use_goal_reward
 
@@ -293,9 +294,9 @@ class SMMAgent(SACAgent):
                 if self.use_goal_reward:
                     p_star = self.get_goal_p_star(obs)
                     p_star = torch.tensor(p_star).to(self.device)
-                    pred_log_ratios = p_star + self.state_ent_coef * h_s_z.detach()
+                    pred_log_ratios = self.reward_scaling * p_star + self.state_ent_coef * h_s_z.detach()
                 else:
-                    pred_log_ratios = extr_reward + self.state_ent_coef * h_s_z.detach()
+                    pred_log_ratios = self.reward_scaling * extr_reward + self.state_ent_coef * h_s_z.detach()
                 intr_reward =  pred_log_ratios + self.latent_ent_coef * h_z + self.latent_cond_ent_coef * h_z_s.detach()
 
                 # if pred_log_ratios.mean().item() > 10000:
@@ -313,9 +314,9 @@ class SMMAgent(SACAgent):
             # add reward free to states motivation
             metrics['intr_reward'] = intr_reward.mean().item()
             if self.use_goal_reward:
-                metrics['p_star'] = p_star.mean().item()
+                metrics['p_star'] = self.reward_scaling * p_star.mean().item()
             else:
-                metrics['extr_reward'] = extr_reward.mean().item()
+                metrics['extr_reward'] = self.reward_scaling * extr_reward.mean().item()
             metrics['pred_log_ratios'] = pred_log_ratios.mean().item()
             metrics['latent_ent_coef'] = (self.latent_ent_coef * h_z).mean().item()
             metrics['latent_cond_ent_coef'] = (self.latent_cond_ent_coef * h_z_s.detach()).mean().item()
