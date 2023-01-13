@@ -131,7 +131,7 @@ class Workspace:
                     action = self.agent.act(time_step.observation, self.global_step, eval_mode=True)
                     time_step = self.eval_env.step(action)
                     self.video_recorder.record(self.eval_env)
-                    if self.cfg.domain == 'SimplePointBot':
+                    if self.cfg.domain == 'SimplePointBot' or self.cfg.domain == "SimpleVelocityBot":
                         reward = self.get_goal_p_star(time_step.observation)
                     else:
                         reward = time_step.reward
@@ -203,7 +203,7 @@ class Workspace:
                 done = True
             else:
                 done = False
-            if self.cfg.domain == "SimplePointBot":
+            if self.cfg.domain == "SimplePointBot" or self.cfg.domain == "SimpleVelocityBot":
                 reward = self.get_goal_p_star(time_step.observation)
             else:
                 reward = time_step.reward
