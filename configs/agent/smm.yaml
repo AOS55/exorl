@@ -16,6 +16,7 @@ vae_beta: 0.5
 state_ent_coef: ${state_ent_coef}
 latent_ent_coef: ${latent_ent_coef}
 latent_cond_ent_coef: ${latent_cond_ent_coef}
+reward_scaling: ${reward_scaling}
 use_goal_reward: true
 
 # SAC params
