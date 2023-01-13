@@ -37,7 +37,8 @@ class SimpleVelocityBot(Env, utils.EzPickle):
                  constr_penalty=-100,
                  goal_thresh=10.0,
                  noise_scale=0.125,
-                 random_reset=False):
+                 random_reset=False,
+                 normalize_obs=True):
         utils.EzPickle.__init__(self)
         self.done = self.state = None
         self.horizon = horizon
@@ -49,11 +50,15 @@ class SimpleVelocityBot(Env, utils.EzPickle):
         self.constr_penalty = constr_penalty
         self.action_space = Box(-np.ones(2) * MAX_ACCEL,
                                 np.ones(2) * MAX_ACCEL)
+        self.normalize_obs = normalize_obs
         if from_pixels:
             self.observation_space = Box(-1, 1, (3, 64, 64))
         else:
-            self.observation_space = Box(-np.ones(4) * np.float('inf'),
-                                         np.ones(4) * np.float('inf'))
+            if normalize_obs:
+                self.observation_space = Box(-np.array(1, 1, np.inf, np.inf), np.array(1, 1, np.inf, np.inf), dtype=np.float32)
+            else:
+                self.observation_space = Box(-np.ones(4) * np.float('inf'),
+                                            np.ones(4) * np.float('inf'))
         self._episode_steps = 0
         # self.obstacle = self._complex_obstacle(OBSTACLE_COORDS)
         if walls is None:
@@ -62,6 +67,12 @@ class SimpleVelocityBot(Env, utils.EzPickle):
         self.wall_coords = walls
         self._from_pixels = from_pixels
         self._image_cache = {}
+    
+    @staticmethod
+    def _normalize(obs):
+        obs[0] = (obs[0] - WINDOW_WIDTH/2) / (WINDOW_WIDTH/2)
+        obs[1] = (obs[1] - WINDOW_HEIGHT/2) / (WINDOW_HEIGHT/2)
+        return obs
 
     def step(self, a):
         a = self._process_action(a)
@@ -77,6 +88,8 @@ class SimpleVelocityBot(Env, utils.EzPickle):
             obs = self._state_to_image(self.state)
         else:
             obs = self.state.astype(dtype=np.float32)
+            if self.normalize_obs:
+                obs = self._normalize(obs)
         return obs, cur_reward, self.done, {
             "constraint": constr,
             "reward": cur_reward,
@@ -102,6 +115,8 @@ class SimpleVelocityBot(Env, utils.EzPickle):
             obs = self._state_to_image(self.state)
         else:
             obs = self.state.astype(dtype=np.float32)
+            if self.normalize_obs:
+                obs = self._normalize(obs)
         return obs
 
     def render(self, mode='human'):
