@@ -55,7 +55,7 @@ class SimpleVelocityBot(Env, utils.EzPickle):
             self.observation_space = Box(-1, 1, (3, 64, 64))
         else:
             if normalize_obs:
-                self.observation_space = Box(-np.array(1, 1, np.inf, np.inf), np.array(1, 1, np.inf, np.inf), dtype=np.float32)
+                self.observation_space = Box(-np.array([1.0, 1.0, np.inf, np.inf]), np.array([1.0, 1.0, np.inf, np.inf]), dtype=np.float32)
             else:
                 self.observation_space = Box(-np.ones(4) * np.float('inf'),
                                             np.ones(4) * np.float('inf'))
