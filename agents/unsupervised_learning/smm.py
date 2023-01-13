@@ -335,12 +335,6 @@ class SMMAgent(SACAgent):
             obs_z = obs_z.detach()
             next_obs_z = next_obs_z.detach()
 
-        # print(f'obs_z: {obs_z.detach().shape}')
-        # print(f'action: {action.shape}')
-        # print(f'reward: {reward.shape}')
-        # print(f'discount: {discount.shape}')
-        # print(f'next_obs_z: {next_obs_z.detach().shape}')
-
         # update critic
         metrics.update(
             self.update_critic(obs_z.detach(), action, reward, discount, next_obs_z.detach(), step)
