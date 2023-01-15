@@ -22,7 +22,7 @@ class ReplayBuffer:
         if len(self.memory) >= batch_size:
             return True
         return False
-
+    
     def sample(self, batch_size: int) -> Batch:
         batch = random.sample(self.memory, batch_size)
         batch = Batch(*zip(*batch))
@@ -33,6 +33,8 @@ class ReplayBuffer:
         d  = torch.tensor(np.array(batch.d), dtype  = torch.float).view(batch_size,  1)
         return Batch(s, a, r, ns, d)
 
+    def __len__(self):
+        return len(self.memory)
 
 class MetaReplayBuffer:
 
@@ -59,3 +61,5 @@ class MetaReplayBuffer:
         z  = torch.tensor(np.array(batch.z), dtype  = torch.float).view(batch_size, -1)
         return MetaBatch(s, a, r, ns, d, z)
     
+    def __len__(self):
+        return len(self.memory)
