@@ -10,10 +10,9 @@
 
 echo ${1} starting
 echo agent ${2}
-ln -f hpc_output/pretrain${SLURM_JOB_ID}.log hpc_output/pretrain${1}.log
+ln -f hpc_output/pretrain${SLURM_JOB_ID}.log hpc_output/train_sac${1}.log
 
 source ./hpc_scripts/setup.sh
-python pretrain.py agent=${2} skill_dim=${1} domain=SimplePointBot obs_type=states
+python train_sac.py seed=${1} domain=SimplePointBot obs_type=states
 
 rm hpc_output/pretrain${SLURM_JOB_ID}.log
-

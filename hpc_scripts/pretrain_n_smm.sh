@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for ENT_COEF in 0.01 0.1 1.0 10.0
+for SEED in 1 2 3 4 5
 do
-    sbatch ./hpc_scripts/pretrain_smm.sh $ENT_COEF ${1}
+    sbatch ./hpc_scripts/pretrain_smm.sh $SEED
 done
