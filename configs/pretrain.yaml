@@ -14,7 +14,7 @@ action_repeat: 1 # set to 2 for pixels
 state_ent_coef: 1.0
 latent_ent_coef: 1.0
 latent_cond_ent_coef: 1.0
-reward_scaling: 1.0
+reward_scaling: 10.0
 
 skill_dim: 4
 discount: 0.99
