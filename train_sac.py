@@ -150,7 +150,7 @@ class Workspace:
         constr = any([wall(agent_pos) for wall in self.walls])
         # add penalty for hitting wall
         if constr:
-            p_star -= 100
+            p_star -= 5
         # p_star = np.array(list(map(_prior_distro, dist)), dtype=np.float32)
         return p_star
 
