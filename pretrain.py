@@ -173,8 +173,7 @@ class Workspace:
             if constr:
                 p_star -= 5
             return p_star
-        p_map = map(add_penalty, agent_pos, p_star)
-        p_star = np.fromiter(p_map, dtype=np.float64)
+        p_star = add_penalty(agent_pos, p_star)
         return p_star
 
     def eval(self):
