@@ -303,8 +303,7 @@ class SMMAgent(SACAgent):
                 p_star -= 5
             return p_star
 
-        vadd_penalty = np.vectorize(add_penalty)
-        p_star = vadd_penalty(agent_pos, p_star)
+        p_star = map(add_penalty, (agent_pos, p_star))
         return p_star
 
     def update(self, b: MetaBatch, step):
