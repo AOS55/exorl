@@ -4,8 +4,8 @@ defaults:
 
 
 # Task Settings
-task: SimpleVelocityBot_goal
-env: SimpleVelocityBot
+task: SimplePointBot_goal
+env: SimplePointBot
 obs_type: states  # [states, pixels]
 frame_stack: 1
 action_repeat: 1
@@ -97,15 +97,15 @@ constr_hidden_size: 200
 constr_lr: 1e-4
 
 # Replay Buffer
-data_dirs: datasets/states/SimpleVelocityBot/controller/prioritized_sampling_1200
-data_counts: 600
+data_dirs: datasets/states/SimplePointBot/controller/
+data_counts: 200
 buffer_size: 35000
 
 # Misc Settings
 seed: 1
 device: cuda
 use_tb: False
-use_wandb: False
+use_wandb: True
 # Experiment
 experiment: exp
 
