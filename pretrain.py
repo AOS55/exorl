@@ -82,13 +82,43 @@ class Workspace:
                                 cfg.agent)
 
         self.goal = [150, 75]
+
         WINDOW_WIDTH = 180
         WINDOW_HEIGHT = 150
+
+        walls = [[[75, 55], [100, 95]]]
 
         def _normalize(obs):
             obs[0] = (obs[0] - WINDOW_WIDTH/2) / (WINDOW_WIDTH/2)
             obs[1] = (obs[1] - WINDOW_HEIGHT/2) / (WINDOW_HEIGHT/2)
             return obs
+
+        def _complex_obstacle(bounds):
+            """
+            Returns a function that returns true if a given state is within the
+            bounds and false otherwise
+            :param bounds: bounds in form [[X_min, Y_min], [X_max, Y_max]]
+            :return: function described above
+            """
+            min_x, min_y = _normalize(bounds[0])
+            max_x, max_y = _normalize(bounds[1])
+
+            def obstacle(state):
+                if type(state) == np.ndarray:
+                    lower = (min_x, min_y)
+                    upper = (max_x, max_y)
+                    state = np.array(state)
+                    component_viol = (state > lower) * (state < upper)
+                    return np.product(component_viol, axis=-1)
+                if type(state) == torch.Tensor:
+                    lower = torch.from_numpy(np.array((min_x, min_y)))
+                    upper = torch.from_numpy(np.array((max_x, max_y)))
+                    component_viol = (state > lower) * (state < upper)
+                    return torch.prod(component_viol, dim=-1)
+
+            return obstacle
+        
+        self.walls = [_complex_obstacle(wall) for wall in walls]
         
         self.goal = tuple(_normalize(self.goal))
 
@@ -137,7 +167,10 @@ class Workspace:
         #     return p_star
         # p_star = _prior_distro(dist)
         p_star = -1.0 * dist
+        constr = any([wall(agent_pos) for wall in self.walls])
         # p_star = np.array(list(map(_prior_distro, dist)), dtype=np.float32)
+        if constr:
+            p_star -= 5
         return p_star
 
     def eval(self):
