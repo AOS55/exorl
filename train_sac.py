@@ -69,7 +69,13 @@ class Workspace:
                                 cfg.agent)
 
         self.goal = [150, 75]
+
         walls = [((75, 55), (100, 95))]
+
+        def _normalize(obs):
+            obs[0] = (obs[0] - WINDOW_WIDTH/2) / (WINDOW_WIDTH/2)
+            obs[1] = (obs[1] - WINDOW_HEIGHT/2) / (WINDOW_HEIGHT/2)
+            return obs
 
         def _complex_obstacle(bounds):
             """
@@ -78,8 +84,8 @@ class Workspace:
             :param bounds: bounds in form [[X_min, Y_min], [X_max, Y_max]]
             :return: function described above
             """
-            min_x, min_y = bounds[0]
-            max_x, max_y = bounds[1]
+            min_x, min_y = _normalize(bounds[0])
+            max_x, max_y = _normalize(bounds[1])
 
             def obstacle(state):
                 if type(state) == np.ndarray:
@@ -100,11 +106,6 @@ class Workspace:
 
         WINDOW_WIDTH = 180
         WINDOW_HEIGHT = 150
-
-        def _normalize(obs):
-            obs[0] = (obs[0] - WINDOW_WIDTH/2) / (WINDOW_WIDTH/2)
-            obs[1] = (obs[1] - WINDOW_HEIGHT/2) / (WINDOW_HEIGHT/2)
-            return obs
         
         self.goal = tuple(_normalize(self.goal))
 
