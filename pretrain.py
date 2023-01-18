@@ -167,10 +167,17 @@ class Workspace:
         #     return p_star
         # p_star = _prior_distro(dist)
         p_star = -1.0 * dist
-        constr = any([wall(agent_pos) for wall in self.walls])
-        # p_star = np.array(list(map(_prior_distro, dist)), dtype=np.float32)
-        if constr:
-            p_star -= 5
+        agent_pos = agent_pos.cpu().detach().numpy()
+
+        def add_penalty(pos, p_star):
+            """Penalty for hitting wall"""
+            constr = any([wall(pos) for wall in self.walls])
+            if constr:
+                p_star -= 5
+            return p_star
+
+        p_map = map(add_penalty, agent_pos, p_star)
+        p_star = np.fromiter(p_map, dtype=np.float32)
         return p_star
 
     def eval(self):

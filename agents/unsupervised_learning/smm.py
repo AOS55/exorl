@@ -303,7 +303,8 @@ class SMMAgent(SACAgent):
                 p_star -= 5
             return p_star
 
-        p_star = np.array(map(add_penalty, (agent_pos, p_star)))
+        p_map = map(add_penalty, agent_pos, p_star)
+        p_star = np.fromiter(p_map, dtype=np.float32)
         return p_star
 
     def update(self, b: MetaBatch, step):
