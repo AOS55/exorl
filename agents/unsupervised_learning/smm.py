@@ -169,39 +169,18 @@ class SMMAgent(SACAgent):
         WINDOW_WIDTH = 180
         WINDOW_HEIGHT = 150
 
-        walls = [[[75, 55], [100, 95]]]
+        bounds = [[75, 55], [100, 95]]
 
         def _normalize(obs):
             obs[0] = (obs[0] - WINDOW_WIDTH/2) / (WINDOW_WIDTH/2)
             obs[1] = (obs[1] - WINDOW_HEIGHT/2) / (WINDOW_HEIGHT/2)
             return obs
 
-        def _complex_obstacle(bounds):
-            """
-            Returns a function that returns true if a given state is within the
-            bounds and false otherwise
-            :param bounds: bounds in form [[X_min, Y_min], [X_max, Y_max]]
-            :return: function described above
-            """
-            min_x, min_y = _normalize(bounds[0])
-            max_x, max_y = _normalize(bounds[1])
-
-            def obstacle(state):
-                if type(state) == np.ndarray:
-                    lower = (min_x, min_y)
-                    upper = (max_x, max_y)
-                    state = np.array(state)
-                    component_viol = (state > lower) * (state < upper)
-                    return np.product(component_viol, axis=-1)
-                if type(state) == torch.Tensor:
-                    lower = torch.from_numpy(np.array((min_x, min_y)))
-                    upper = torch.from_numpy(np.array((max_x, max_y)))
-                    component_viol = (state > lower) * (state < upper)
-                    return torch.prod(component_viol, dim=-1)
-
-            return obstacle
         
-        self.walls = [_complex_obstacle(wall) for wall in walls]
+        self.min_x, self.min_y = _normalize(bounds[0])
+        self.max_x, self.max_y = _normalize(bounds[1])
+        
+        self.walls = self.obstacle
         
         self.goal = tuple(_normalize(self.goal))
 
@@ -232,6 +211,19 @@ class SMMAgent(SACAgent):
         if time_step.last():
             return self.init_meta()
         return meta
+
+    def obstacle(self, state):
+            if type(state) == np.ndarray:
+                lower = (self.min_x, self.min_y)
+                upper = (self.max_x, self.max_y)
+                state = np.array(state)
+                component_viol = (state > lower) * (state < upper)
+                return np.product(component_viol, axis=-1)
+            if type(state) == torch.Tensor:
+                lower = torch.from_numpy(np.array((self.min_x, self.min_y)))
+                upper = torch.from_numpy(np.array((self.max_x, self.max_y)))
+                component_viol = (state > lower) * (state < upper)
+                return torch.prod(component_viol, dim=-1)
 
     def update_meta_ft(self, meta, global_step, time_step):
         z_ind = meta['z'].argmax()
