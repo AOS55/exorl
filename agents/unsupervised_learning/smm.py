@@ -290,7 +290,7 @@ class SMMAgent(SACAgent):
 
         def add_penalty(pos, p_star):
             """Penalty for hitting wall"""
-            constr = any([wall(pos) for wall in self.walls])
+            constr = self.walls(pos)
             if constr:
                 p_star -= 5
             return p_star
