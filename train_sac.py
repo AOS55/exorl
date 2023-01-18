@@ -70,6 +70,9 @@ class Workspace:
 
         self.goal = [150, 75]
 
+        WINDOW_WIDTH = 180
+        WINDOW_HEIGHT = 150
+
         walls = [((75, 55), (100, 95))]
 
         def _normalize(obs):
@@ -103,9 +106,6 @@ class Workspace:
             return obstacle
         
         self.walls = [_complex_obstacle(wall) for wall in walls]
-
-        WINDOW_WIDTH = 180
-        WINDOW_HEIGHT = 150
         
         self.goal = tuple(_normalize(self.goal))
 
