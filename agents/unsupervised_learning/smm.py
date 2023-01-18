@@ -164,8 +164,17 @@ class SMMAgent(SACAgent):
                        vae_beta=vae_beta,
                        device=kwargs['device']).to(kwargs['device'])
         
-        self.goal = [150, 75]  # TODO: Fix as part of config
-        walls = [((75, 55), (100, 95))]
+        self.goal = [150, 75]
+
+        WINDOW_WIDTH = 180
+        WINDOW_HEIGHT = 150
+
+        walls = [[[75, 55], [100, 95]]]
+
+        def _normalize(obs):
+            obs[0] = (obs[0] - WINDOW_WIDTH/2) / (WINDOW_WIDTH/2)
+            obs[1] = (obs[1] - WINDOW_HEIGHT/2) / (WINDOW_HEIGHT/2)
+            return obs
 
         def _complex_obstacle(bounds):
             """
@@ -174,8 +183,8 @@ class SMMAgent(SACAgent):
             :param bounds: bounds in form [[X_min, Y_min], [X_max, Y_max]]
             :return: function described above
             """
-            min_x, min_y = bounds[0]
-            max_x, max_y = bounds[1]
+            min_x, min_y = _normalize(bounds[0])
+            max_x, max_y = _normalize(bounds[1])
 
             def obstacle(state):
                 if type(state) == np.ndarray:
@@ -192,15 +201,7 @@ class SMMAgent(SACAgent):
 
             return obstacle
         
-        self.walls = _complex_obstacle(walls)
-
-        WINDOW_WIDTH = 180
-        WINDOW_HEIGHT = 150
-
-        def _normalize(obs):
-            obs[0] = (obs[0] - WINDOW_WIDTH/2) / (WINDOW_WIDTH/2)
-            obs[1] = (obs[1] - WINDOW_HEIGHT/2) / (WINDOW_HEIGHT/2)
-            return obs
+        self.walls = [_complex_obstacle(wall) for wall in walls]
         
         self.goal = tuple(_normalize(self.goal))
 
@@ -285,7 +286,6 @@ class SMMAgent(SACAgent):
         x_dist = x_dist.cpu().detach().numpy()
         y_dist = y_dist.cpu().detach().numpy()
         dist = np.linalg.norm((x_dist, y_dist), axis=0)
-
         # def _prior_distro(dist):
         #     if dist > 1.0:
         #         p_star = 1/dist
@@ -294,11 +294,10 @@ class SMMAgent(SACAgent):
         #     return p_star
         # p_star = np.array(list(map(_prior_distro, dist)), dtype=np.float32)
         p_star = -1.0 * dist
-        
         constr = any([wall(agent_pos) for wall in self.walls])
         # add penalty for hitting wall
         if constr:
-            p_star -= 100
+            p_star -= 5
         return p_star
 
     def update(self, b: MetaBatch, step):
