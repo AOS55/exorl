@@ -69,6 +69,35 @@ class Workspace:
                                 cfg.agent)
 
         self.goal = [150, 75]
+        walls = [((75, 55), (100, 95))]
+
+        def _complex_obstacle(bounds):
+            """
+            Returns a function that returns true if a given state is within the
+            bounds and false otherwise
+            :param bounds: bounds in form [[X_min, Y_min], [X_max, Y_max]]
+            :return: function described above
+            """
+            min_x, min_y = bounds[0]
+            max_x, max_y = bounds[1]
+
+            def obstacle(state):
+                if type(state) == np.ndarray:
+                    lower = (min_x, min_y)
+                    upper = (max_x, max_y)
+                    state = np.array(state)
+                    component_viol = (state > lower) * (state < upper)
+                    return np.product(component_viol, axis=-1)
+                if type(state) == torch.Tensor:
+                    lower = torch.from_numpy(np.array((min_x, min_y)))
+                    upper = torch.from_numpy(np.array((max_x, max_y)))
+                    component_viol = (state > lower) * (state < upper)
+                    return torch.prod(component_viol, dim=-1)
+
+            return obstacle
+        
+        self.walls = _complex_obstacle(walls)
+
         WINDOW_WIDTH = 180
         WINDOW_HEIGHT = 150
 
@@ -117,6 +146,10 @@ class Workspace:
         #     return p_star
         # p_star = _prior_distro(dist)
         p_star = -1.0 * dist
+        constr = any([wall(agent_pos) for wall in self.walls])
+        # add penalty for hitting wall
+        if constr:
+            p_star -= 100
         # p_star = np.array(list(map(_prior_distro, dist)), dtype=np.float32)
         return p_star
 
@@ -133,6 +166,7 @@ class Workspace:
                     self.video_recorder.record(self.eval_env)
                     if self.cfg.domain == 'SimplePointBot' or self.cfg.domain == "SimpleVelocityBot":
                         reward = self.get_goal_p_star(time_step.observation)
+                        print(f'reward: {reward}')
                     else:
                         reward = time_step.reward
                     total_reward += reward
