@@ -96,7 +96,7 @@ class Workspace:
 
             return obstacle
         
-        self.walls = _complex_obstacle(walls)
+        self.walls = [_complex_obstacle(wall) for wall in walls]
 
         WINDOW_WIDTH = 180
         WINDOW_HEIGHT = 150
@@ -166,7 +166,6 @@ class Workspace:
                     self.video_recorder.record(self.eval_env)
                     if self.cfg.domain == 'SimplePointBot' or self.cfg.domain == "SimpleVelocityBot":
                         reward = self.get_goal_p_star(time_step.observation)
-                        print(f'reward: {reward}')
                     else:
                         reward = time_step.reward
                     total_reward += reward
