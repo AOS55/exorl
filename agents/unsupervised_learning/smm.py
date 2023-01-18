@@ -294,6 +294,7 @@ class SMMAgent(SACAgent):
         #     return p_star
         # p_star = np.array(list(map(_prior_distro, dist)), dtype=np.float32)
         p_star = -1.0 * dist
+        agent_pos = agent_pos.cpu().detach().numpy()
         constr = any([wall(agent_pos) for wall in self.walls])
         # add penalty for hitting wall
         if constr:
