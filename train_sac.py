@@ -73,7 +73,7 @@ class Workspace:
         WINDOW_WIDTH = 180
         WINDOW_HEIGHT = 150
 
-        walls = [((75, 55), (100, 95))]
+        walls = [[[75, 55], [100, 95]]]
 
         def _normalize(obs):
             obs[0] = (obs[0] - WINDOW_WIDTH/2) / (WINDOW_WIDTH/2)
