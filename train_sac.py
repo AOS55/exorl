@@ -108,7 +108,7 @@ class Workspace:
         self.walls = [_complex_obstacle(wall) for wall in walls]
         
         self.goal = tuple(_normalize(self.goal))
-        self.goal_dist = self._normalize(5.0)
+        self.goal_dist = _normalize(5.0)
 
         self.replay_buffer = ReplayBuffer(capacity=int(cfg.replay_buffer_size))
 
