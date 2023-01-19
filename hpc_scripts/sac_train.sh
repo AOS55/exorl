@@ -4,6 +4,7 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --partition gpu
 #SBATCH --time=6:00:00
+#SBATCH --account=aero022622
 #SBATCH --job-name=pretrain_spb
 #SBATCH --mem=20G
 #SBATCH --output=hpc_output/pretrain%j.log
