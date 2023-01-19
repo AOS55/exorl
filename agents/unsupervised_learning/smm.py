@@ -183,7 +183,7 @@ class SMMAgent(SACAgent):
         self.walls = self.obstacle
         
         self.goal = tuple(_normalize(self.goal))
-        self.goal_dist = 0.03
+        self.goal_dist = 0.25
 
         self.pred_optimizer = torch.optim.Adam(self.smm.z_pred_net.parameters(), lr=sp_lr)
         self.vae_optimizer = torch.optim.Adam(self.smm.vae.parameters(), lr=vae_lr)
