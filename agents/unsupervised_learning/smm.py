@@ -183,7 +183,7 @@ class SMMAgent(SACAgent):
         self.walls = self.obstacle
         
         self.goal = tuple(_normalize(self.goal))
-        self.goal_dist = 0.25
+        self.goal_dist = 0.55
 
         self.pred_optimizer = torch.optim.Adam(self.smm.z_pred_net.parameters(), lr=sp_lr)
         self.vae_optimizer = torch.optim.Adam(self.smm.vae.parameters(), lr=vae_lr)
@@ -293,13 +293,13 @@ class SMMAgent(SACAgent):
             """Penalty for hitting wall"""
             constr = self.walls(pos)
             if constr:
-                p_star -= 5
+                p_star -= 1
             return p_star
 
         def add_goal_bonus(dist, p_star):
             """Bonus for being in goal state"""
             if dist < self.goal_dist:
-                p_star += 50
+                p_star += 5
             return p_star
 
         p_map = map(add_penalty, agent_pos, p_star)

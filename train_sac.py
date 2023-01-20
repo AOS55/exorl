@@ -108,7 +108,7 @@ class Workspace:
         self.walls = [_complex_obstacle(wall) for wall in walls]
         
         self.goal = tuple(_normalize(self.goal))
-        self.goal_dist = 0.25
+        self.goal_dist = 0.55
 
         self.replay_buffer = ReplayBuffer(capacity=int(cfg.replay_buffer_size))
 
@@ -151,10 +151,10 @@ class Workspace:
         constr = any([wall(agent_pos) for wall in self.walls])
         # add penalty for hitting wall
         if constr:
-            p_star -= 5
+            p_star -= 1
         # add reward bonus if at goal state
         if dist < self.goal_dist:
-            p_star += 50
+            p_star += 5
         # p_star = np.array(list(map(_prior_distro, dist)), dtype=np.float32)
         return p_star
 

@@ -87,7 +87,7 @@ class Workspace:
         WINDOW_HEIGHT = 150
 
         walls = [[[75, 55], [100, 95]]]
-        self.goal_dist = 0.25
+        self.goal_dist = 0.55
 
         def _normalize(obs):
             obs[0] = (obs[0] - WINDOW_WIDTH/2) / (WINDOW_WIDTH/2)
@@ -172,13 +172,13 @@ class Workspace:
             """Penalty for hitting wall"""
             constr = any([wall(pos) for wall in self.walls])
             if constr:
-                p_star -= 5
+                p_star -= 1
             return p_star
 
         def add_goal_bonus(dist, p_star):
             """Bonus for being in goal state"""
             if dist < self.goal_dist:
-                p_star += 50
+                p_star += 5
             return p_star
 
         p_star = add_penalty(agent_pos, p_star)
