@@ -302,7 +302,7 @@ class SMMAgent(SACAgent):
                 p_star += 5
             return p_star
 
-        p_map = map(add_penalty, agent_pos, p_star)
+        p_map = map(add_penalty, agent_pos[:, 0:2], p_star)
         p_star = np.fromiter(p_map, dtype=np.float32)
         p_map = map(add_goal_bonus, dist, p_star)
         p_star = np.fromiter(p_map, dtype=np.float32)
