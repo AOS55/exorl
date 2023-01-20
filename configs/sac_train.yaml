@@ -34,7 +34,7 @@ nstep: ${agent.nstep}
 # misc
 seed: 5
 device: cuda
-log_dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${agent.name}
+log_dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${agent.name}/${seed}
 use_tb: false
 use_wandb: true
 
@@ -43,4 +43,4 @@ experiment: exp
 
 hydra:
   run:
-    dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${agent.name}
+    dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${agent.name}/${seed}
