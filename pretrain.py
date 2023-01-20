@@ -181,7 +181,7 @@ class Workspace:
                 p_star += 5
             return p_star
 
-        p_star = add_penalty(agent_pos, p_star)
+        p_star = add_penalty(agent_pos[0:2], p_star)
         p_star = add_goal_bonus(dist, p_star)
         return p_star
 
