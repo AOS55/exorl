@@ -41,7 +41,7 @@ class Workspace:
             ])
             wandb.init(project="urls", group=cfg.agent.name, name=exp_name, config=OmegaConf.to_container(cfg, resolve=True))
 
-        self.logger = Logger(self.work_dir,
+        self.logger = Logger(self.log_dir,
                              use_tb=cfg.use_tb,
                              use_wandb=cfg.use_wandb)
         self.env_type = ENV_TYPES[self.cfg.domain]
@@ -115,7 +115,7 @@ class Workspace:
 
         # create video recorders
         self.video_recorder = VideoRecorder(
-            self.work_dir if cfg.save_video else None,
+            self.log_dir if cfg.save_video else None,
             camera_id=0 if 'quadruped' not in self.cfg.domain else 2,
             use_wandb=self.cfg.use_wandb)
 
@@ -265,7 +265,7 @@ class Workspace:
             self._global_step += 1
 
     def save_snapshot(self):
-        snapshot_dir = self.work_dir / Path(self.cfg.snapshot_dir)
+        snapshot_dir = self.log_dir / Path(self.cfg.snapshot_dir)
         snapshot_dir.mkdir(exist_ok=True, parents=True)
         snapshot = snapshot_dir / f'snapshot_{self.global_frame}.pt'
         keys_to_save = ['agent', '_global_step', '_global_episode']
