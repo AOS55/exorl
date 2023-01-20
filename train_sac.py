@@ -28,6 +28,7 @@ def make_agent(obs_type, obs_spec, action_spec, num_expl_steps, cfg):
 class Workspace:
     def __init__(self, cfg):
         self.work_dir = Path.cwd()
+        print(f'workspace: {self.work_dir}')
         self.log_dir = cfg.log_dir
         self.cfg = cfg
         utils.set_seed_everywhere(cfg.seed)
@@ -194,6 +195,9 @@ class Workspace:
         train_until_step = utils.Until(self.cfg.num_train_frames, self.cfg.action_repeat)
         eval_every_step = utils.Every(self.cfg.eval_every_frames, self.cfg.action_repeat)
 
+        snapshots = self.cfg.snapshots.copy()
+        snapshot = snapshots[0]
+
         episode_step, episode_reward = 0, 0
         time_step = self.train_env.reset()
         obs = time_step.observation
@@ -220,6 +224,12 @@ class Workspace:
                 # reset env
                 time_step = self.train_env.reset()
                 episode_step, episode_reward = 0, 0
+
+                # try to save snapshot
+                if self.global_frame > snapshot:
+                    self.save_snapshot()
+                    snapshots = snapshots[1:]
+                    snapshot = snapshots[0]
 
             # try to evaluate
             if eval_every_step(self.global_step):
@@ -253,6 +263,15 @@ class Workspace:
             episode_step += 1
             episode_reward += reward
             self._global_step += 1
+
+    def save_snapshot(self):
+        snapshot_dir = self.work_dir / Path(self.cfg.snapshot_dir)
+        snapshot_dir.mkdir(exist_ok=True, parents=True)
+        snapshot = snapshot_dir / f'snapshot_{self.global_frame}.pt'
+        keys_to_save = ['agent', '_global_step', '_global_episode']
+        payload = {k: self.__dict__[k] for k in keys_to_save}
+        with snapshot.open('wb') as f:
+            torch.save(payload, f)
 
     def run(self):
         self.train()
