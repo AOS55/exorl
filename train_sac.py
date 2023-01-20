@@ -279,6 +279,7 @@ class Workspace:
     @hydra.main(version_base="1.2", config_path="configs/.", config_name="sac_train")
     def main(cfg):
         from train_sac import Workspace as W
+        root_dir = Path.cwd()
         workspace = W(cfg)
         workspace.run()
 
