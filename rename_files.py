@@ -12,6 +12,7 @@ def main():
         src = directory
         dst = directory.split('/')[:-1]
         dst.append(get_name(directory))
+        print(f'get directory name: {get_name(directory)}')
         dst = os.path.join(*dst)
         print(f'src: {src}, dst: {dst}')
         os.rename(src, dst)
@@ -26,7 +27,8 @@ def get_name(dir):
             print(f'yaml.YAMLError is exc: {exc}')
     skill_dim = contents['skill_dim']
     snapshot_ts = contents['snapshot_ts']
-    name = f"prioritized_sampling_{skill_dim}_{snapshot_ts}"
+    seed = contents['seed']
+    name = f"prioritized_sampling_{skill_dim}_{seed}_{snapshot_ts}"
     return name
 if __name__=='__main__':
     main()
