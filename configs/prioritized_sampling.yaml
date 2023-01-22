@@ -2,9 +2,10 @@ defaults:
   - agent: ddpg
   - override hydra/launcher: submitit_local
 
-state_ent_coef: 1.0
-latent_ent_coef: 1.0
-latent_cond_ent_coef: 1.0
+state_ent_coef: 0.1
+latent_ent_coef: 0.1
+latent_cond_ent_coef: 0.1
+reward_scaling: 1.0
 
 # mode
 reward_free: false
