@@ -138,9 +138,15 @@ class Workspace:
             camera_id=0 if 'quadruped' not in self.cfg.domain else 2,
             use_wandb=self.cfg.use_wandb)
 
+         # initialize from pre-trained
+        if cfg.snapshot_ts > 0:
+            print(f'snapshot is: {self.load_snapshot()}')
+            pretrained_agent = self.load_snapshot()['agent']
+            self.agent.init_from(pretrained_agent)
+
         self.timer = utils.Timer()
-        self._global_step = 0
-        self._global_episode = 0
+        self._global_step = self.cfg.snapshot_ts
+        self._global_episode = self.cfg.snapshot_ts // 100
 
     @property
     def global_step(self):
@@ -390,6 +396,38 @@ class Workspace:
                     data[y, x] = reward_func(obs)
             if plot:
                 env.draw(heatmap=data, file=file, show=show)
+
+    def load_snapshot(self):
+        snapshot_base_dir = Path(self.cfg.snapshot_base_dir)
+        domain = self.cfg.domain
+        snapshot_dir = snapshot_base_dir / self.cfg.obs_type / domain / self.cfg.agent.name
+
+        def try_load(seed):
+            if self.cfg.agent.name in ['diayn', 'smm']:
+                snapshot = snapshot_dir / f'{self.cfg.skill_dim}' / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
+            else:
+                snapshot = snapshot_dir / str(seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
+            print(f'current dir is: {os.getcwd()}')
+            print(f'snapshot file location is: {snapshot}')
+            print(f'snapshot exists: {snapshot.exists()}')
+            if not snapshot.exists():
+                return None
+            with snapshot.open('rb') as f:
+                print(f'f is: {f}')
+                payload = torch.load(f)
+            return payload
+
+        # try to load current seed
+        payload = try_load(self.cfg.seed)
+        if payload is not None:
+            return payload
+        # otherwise try random seed
+        while True:
+            seed = np.random.randint(1, 11)
+            payload = try_load(seed)
+            if payload is not None:
+                return payload
+        return None
 
 @hydra.main(config_path='configs/.', config_name='pretrain')
 def main(cfg):
