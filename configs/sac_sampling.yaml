@@ -1,0 +1,50 @@
+defaults:
+  - _self_
+  - agent: sac
+  - override hydra/launcher: submitit_local
+
+# mode
+reward_free: false
+
+# algo params
+domain: SimplePointBot
+task: SimplePointBot_goal
+obs_type: states
+discount: 0.99
+frame_stack: 1
+action_repeat: 1
+random_start: false
+
+# exposed sac params
+alpha: 0.1
+
+# sample settings
+num_sample_episodes: 100
+data_type: unsupervised
+
+# pretrained
+snapshot_ts: 3900014
+snapshot_base_dir: ./../../../../data/models/
+
+# replay buffer
+replay_buffer_size: 1000000
+replay_buffer_num_workers: 4
+batch_size: ${agent.batch_size}
+nstep: ${agent.nstep}
+num_seed_frames: 4000
+
+# misc
+seed: 3
+device: cuda
+save_video: false
+save_train_video: false
+save_to_data: true
+use_tb: false
+use_wandb: false
+
+# experiment
+experiment: exp
+
+hydra:
+  run: 
+    dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${agent.name}/${seed}
