@@ -34,10 +34,10 @@ class SimplePointBot(Env, utils.EzPickle):
                  end_pos=(150, 75),
                  horizon=100,
                  constr_penalty=-100,
-                 goal_thresh=3,
+                 goal_thresh=10,
                  noise_scale=0.125,
                  random_reset=False, 
-                 normalize_obs=True):
+                 normalize_obs=False):
         utils.EzPickle.__init__(self)
         self.done = self.state = None
         self.horizon = horizon
@@ -154,6 +154,7 @@ class SimplePointBot(Env, utils.EzPickle):
         """
         Returns -1 if not in goal otherwise 0
         """
+        # print(f'For Reward ->  end_pos: {self.end_pos}, s: {s}, goal_thresh: {self.goal_thresh}')
         return int(np.linalg.norm(np.subtract(self.end_pos, s)) < self.goal_thresh) - 1
 
     def obstacle(self, s):
