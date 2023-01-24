@@ -15,7 +15,10 @@ def main():
         print(f'get directory name: {get_name(directory)}')
         dst = os.path.join(*dst)
         print(f'src: {src}, dst: {dst}')
-        os.rename(src, dst)
+        try:
+            os.rename(src, dst)
+        except OSError:
+            print(f'No file available')
     return None
 
 def get_name(dir):
