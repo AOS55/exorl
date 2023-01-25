@@ -37,7 +37,7 @@ class SimplePointBot(Env, utils.EzPickle):
                  goal_thresh=10,
                  noise_scale=0.125,
                  random_reset=False, 
-                 normalize_obs=False):
+                 normalize_obs=True):
         utils.EzPickle.__init__(self)
         self.done = self.state = None
         self.horizon = horizon
