@@ -17,6 +17,6 @@ old_data/
 .vscode/
 *.log
 *.out
-*.png
+# *.png
 *.jpg
 *.prof
