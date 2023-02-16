@@ -1,10 +1,9 @@
 #!/bin/bash
 
-echo seed ${1}
-for SKILL_DIM in 128 256 512
-    do for AGENT in diayn
-        do for SNAPSHOT_TS in 10000 50000 100000 500000 1000000
-            do python prioritized_sampling.py seed=${1} skill_dim=$SKILL_DIM agent=$AGENT obs_type=states task=SimplePointBot_goal data_type=unsupervised snapshot_ts=$SNAPSHOT_TS
+for SEED in 10
+    do for AGENT in smm
+        do for SNAPSHOT_TS in 10100 50100 100100 200100 300100 400100 500100 600100 700100 800100 900100 1000100 1100100 1200100 1300100 1400100 1500100 1600100 1700100 1800100 1900100 2000100 2100100 2200100 2300100 2400100 2500100 2600100 2700100 2800100 2900100 3000100 3100100 3200100 3300100 3400100 3500100 3600100 3700100 3800100 3900100
+            do python prioritized_sampling.py seed=$SEED skill_dim=4 agent=$AGENT obs_type=states task=SimplePointBot_goal data_type=unsupervised snapshot_ts=$SNAPSHOT_TS
         done
     done
 done
