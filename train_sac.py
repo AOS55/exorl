@@ -1,4 +1,5 @@
 import hydra
+import os
 import numpy as np
 import torch
 import wandb
@@ -109,7 +110,8 @@ class Workspace:
         self.walls = [_complex_obstacle(wall) for wall in walls]
         
         self.goal = tuple(_normalize(self.goal))
-        self.goal_dist = 0.55
+        # self.goal_dist = 0.55
+        self.goal_dist = 0.35
 
         self.replay_buffer = ReplayBuffer(capacity=int(cfg.replay_buffer_size))
 
@@ -149,7 +151,7 @@ class Workspace:
         #     return p_star
         # p_star = _prior_distro(dist)
         p_star = -1.0 * dist
-        constr = any([wall(agent_pos) for wall in self.walls])
+        constr = any([wall(agent_pos[0:2]) for wall in self.walls])
         # add penalty for hitting wall
         if constr:
             p_star -= 1
@@ -188,7 +190,6 @@ class Workspace:
 
             step, total_reward = 0, 0
 
-    
     def train(self):
 
         # predicates
