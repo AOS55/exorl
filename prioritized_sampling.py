@@ -91,7 +91,7 @@ class Workspace:
         self.replay_storage = ReplayBufferStorage(data_specs, meta_specs,
                                                   self.work_dir / 'buffer')
 
-        # create replay buffer
+        # create replay loader
         self.replay_loader = make_replay_loader(self.replay_storage,
                                                 cfg.replay_buffer_size,
                                                 cfg.batch_size,
@@ -144,7 +144,7 @@ class Workspace:
         start_path = self.generate_samples(self.sample_env, sample_until_step=sample_until_step, seed_until_step=seed_until_step, sampling_name='sample')
         norm_skill_reward = np.array(self.skill_reward_sum(start_path))
         print(f'normalized_skill_reward: {norm_skill_reward}')
-        reward_skill_set = np.where(norm_skill_reward > -0.95)[0]
+        reward_skill_set = np.where(norm_skill_reward > -1)[0]
         os.makedirs(os.path.join(self.work_dir, 'buffer'))
         reward_path = self.generate_samples(self.sample_env, sample_until_step=prioritize_sample_until_step, seed_until_step=seed_until_step, sampling_name='rewards', skill_set=reward_skill_set)
         self.make_training_set(reward_path, constraint_path)
