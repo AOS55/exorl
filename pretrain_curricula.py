@@ -151,4 +151,67 @@ class Workspace:
                                       self.cfg.action_repeat)
         eval_every_step = utils.Every(self.cfg.eval_every_frames,
                                       self.cfg.action_repeat)
-        snapsh
+        snapshots = self.cfg.snapshots.copy()
+        snapshot = snapshots[0]
+
+        episode_step, episode_reward = 0, 0
+        time_step = self.train_env.reset()
+        meta = self.agent.init_meta()
+        self.replay_storage.add(time_step, meta)
+        self.train_video_recorder.init(time_step.observation)
+        metrics = None
+        while train_until_step(self.gloabl_step):
+            if time_step.last():
+                self._global_episode += 1
+                self.train_video_recorder.save(f'{self.global_frame}.mp4')
+                # wait until all the metrics schema is populated
+                if metrics is not None:
+                    # log stats
+                    elapsed_time, total_time = self.timer.reset()
+                    episode_frame = episode_step * self.cfg.action_repeat
+                    with self.logger.log_and_dump_ctx(self.global_frame,
+                                                      ty='train') as log:
+                        log('fps', episode_frame / elapsed_time)
+                        log('total_time', total_time)
+                        log('episode_reward', episode_reward)
+                        log('episode_length', episode_frame)
+                        log('episode', self.global_episode)
+                        log('buffer_size', len(self.replay_storage))
+                        log('step', self.global_step)
+
+                # reset env
+                time_step = self.train_env.reset()
+                meta = self.agent.init_meta()
+                self.replay_storage.add(time_step, meta)
+                self.train_video_recorder.init(time_step.observation)
+                # try to save snapshot
+                if self.global_frame > snapshot:
+                    self.save_snapshot()
+                    snapshots = snapshots[1:]
+                    snapshot = snapshots[0]
+
+                episode_step = 0
+                episode_reward = 0
+
+            # try to evaluate
+
+            # sample action
+
+            # try to update the agent
+
+            # take env step
+
+@hydra.main(config_path='configs/.', config_name='pretrain_curricula')
+def main(cfg):
+    from pretrain_curricula import workspace as W
+    root_dir = Path.cwd()
+    workspace = W(cfg)
+    snapshot = root_dir / 'snapshot.pt'
+    if snapshot.exists():
+        print(f'resuming: {snapshot}')
+        workspace.load_snapshot()
+    workspace.train()
+
+
+if __name__ == '__main__':
+    main()
