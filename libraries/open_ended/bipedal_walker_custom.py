@@ -18,7 +18,7 @@ from gym.error import DependencyNotInstalled
 from collections import namedtuple
 from gym.utils.renderer import Renderer
 
-from libraries.open_ended.utils import init_flat_bwc
+from libraries.open_ended.utils import init_flat_bwc, Env_Config
 
 # This is simple 4-joints walker robot environment.
 #
@@ -47,14 +47,6 @@ from libraries.open_ended.utils import init_flat_bwc
 # To solve hardcore version you need 300 points in 2000 time steps.
 #
 # Created by Oleg Klimov. Licensed on the same terms as the rest of OpenAI Gym.
-
-Env_Config = namedtuple('Env_Config', [
-    'name',
-    'ground_roughness',
-    'pit_gap',
-    'stump_width',  'stump_height', 'stump_float',
-    'stair_height', 'stair_width', 'stair_steps'
-])
 
 FPS = 50
 SCALE = 30.0   # affects how fast-paced the game is, forces should be adjusted as well

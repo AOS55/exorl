@@ -234,6 +234,7 @@ class ObservationDTypeWrapper(dm_env.Environment):
     def __init__(self, env, dtype):
         self._env = env
         self._dtype = dtype
+        print(f'env: {env}')
         wrapped_obs_spec = env.observation_spec()['observations']
         self._obs_spec = specs.Array(wrapped_obs_spec.shape, dtype,
                                      'observation')
@@ -334,8 +335,13 @@ def _make_gym(obs_type, domain, task, frame_stack, action_repeat, seed, random_s
     return env
 
 def _make_open_ended(obs_type, domain, task, frame_stack, action_repeat, seed, random_start):
-    env = OPEN_ENDED_ENVS[domain](render_mode='single_rgb_array')
-    env = GymWrapper(env)
+    if obs_type == 'states':
+        env = OPEN_ENDED_ENVS[domain](render_mode='human')
+        env = GymWrapper(env)
+    else:
+        from_pixels = True
+        env = OPEN_ENDED_ENVS[domain](render_mode='single_rgb_array')
+        env = GymWrapper(env)
     env = ActionDTypeWrapper(env, np.float32)
     env = ActionRepeatWrapper(env, action_repeat)
     return env

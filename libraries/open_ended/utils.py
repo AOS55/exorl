@@ -4,6 +4,14 @@ from abc import ABC, abstractmethod
 import numpy as np
 from collections import namedtuple
 
+Env_Config = namedtuple('Env_Config', [
+    'name',
+    'ground_roughness',
+    'pit_gap',
+    'stump_width',  'stump_height', 'stump_float',
+    'stair_height', 'stair_width', 'stair_steps'
+])
+
 def name_bwc_config(ground_roughness,
                 	pit_gap,
                     stump_width, stump_height, stump_float,
