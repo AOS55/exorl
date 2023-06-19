@@ -2,6 +2,11 @@ from libraries.open_ended.bipedal_walker_custom import BipedalWalkerCustom
 from libraries.open_ended.utils import init_env_params, make_env_config, DR, make_new_params
 from utils.env_constructor import make
 
+MUJOCO_GL = 'egl'
+
+import os
+os.environ["SDL_VIDEODRIVER"] = "dummy"
+
 def main():
     env = make('BipedalCustom', 'states', 1, 1, 1, False)
     print(f'env: {env}')
