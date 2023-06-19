@@ -10,6 +10,7 @@ from dm_env import StepType, specs
 
 import libraries.dmc as cdmc
 from libraries.safe import SimplePointBot, SimpleVelocityBot
+from libraries.flyer import Env as Flyer
 from libraries.safe.dmc import ant_obstacle
 from .wrappers import GymWrapper
 from .wrappers import FrameStack
@@ -25,7 +26,8 @@ ENV_TYPES = {
     'LunarLander-v2': 'gym',
     'SimplePointBot': 'safe',
     'SimpleVelocityBot': 'safe',
-    'ant_obstacle': 'dmc'
+    'ant_obstacle': 'dmc',
+    'flyer': 'flyer'
 }
 
 SAFE_ENVS = {
@@ -342,6 +344,15 @@ def _make_custom(obs_type, domain, task, frame_stack, action_repeat, seed, rando
     env = ActionRepeatWrapper(env, action_repeat)
     return env
 
+def _make_flyer(obs_type, domain, task, frame_stack, action_repeat, seed, random_start=False):
+    env = Flyer(seed=seed, area=(256, 256, 64), view=10, length=100, rod=1, airspeed=5, ldg_dist=4, alt=128, engine_fail=True, health=1, window=800,
+                record=None, fps=10, water_present=True, custom_world=None, mode="map")
+    env = FrameStack(env, num_stack=frame_stack)
+    env = GymWrapper(env)
+    env = ActionDTypeWrapper(env, np.float32)
+    env = ActionRepeatWrapper(env, action_repeat)
+    return env
+
 def _make_dmc(obs_type, domain, task, frame_stack, action_repeat, seed, random_start):
     visualize_reward = False
     if (domain, task) in suite.ALL_TASKS:
@@ -385,6 +396,8 @@ def make(name, obs_type, frame_stack, action_repeat, seed, random_start=False):
         make_fn = _make_gym
     elif env_type == 'safe':
         make_fn = _make_custom
+    elif env_type == 'flyer':
+        make_fn = _make_flyer
     else:
         make_fn = _make_dmc
     env = make_fn(obs_type, domain, task, frame_stack, action_repeat, seed, random_start=random_start)
