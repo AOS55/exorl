@@ -1,0 +1,16 @@
+numpy
+box2d-py
+cmake
+dm-tree
+dm-env
+dm_control
+torch
+matplotlib
+scikit-image
+torchvision
+wandb
+termcolor
+tensorboard
+omegaconf
+opencv-python
+gym[box2d]
